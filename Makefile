@@ -1,5 +1,6 @@
 # Soroban fullstack POC — common tasks from repo root
 .DEFAULT_GOAL := help
+SHELL := /bin/bash
 
 REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
@@ -30,8 +31,13 @@ contract-test: ## Run cargo test in contracts/basic-storage
 clippy: ## Run cargo clippy with warnings denied
 	cd $(CONTRACT_DIR) && cargo clippy --all-targets -- -D warnings
 
-build-contract: ## Build Soroban WASM via stellar contract build
-	cd $(CONTRACT_DIR) && stellar contract build
+build-contract: ## Build Soroban WASM (stellar if installed, else cargo release for wasm32v1-none)
+	@if command -v stellar >/dev/null 2>&1; then \
+		cd "$(CONTRACT_DIR)" && stellar contract build; \
+	else \
+		echo "stellar: not in PATH — using cargo (install Stellar CLI for deploy: https://developers.stellar.org/docs/tools)" >&2; \
+		cd "$(CONTRACT_DIR)" && cargo build --target wasm32v1-none --release; \
+	fi
 
 build-frontend: ## Production Next.js build (run install-frontend first if node_modules is missing)
 	cd $(FRONTEND_DIR) && npm run build

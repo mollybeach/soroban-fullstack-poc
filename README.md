@@ -158,7 +158,7 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
 | `make contract-test` | `cargo test` in `contracts/basic-storage/` |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
-| `make build-contract` | `stellar contract build` in `contracts/basic-storage/` |
+| `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |
 | `make build-frontend` | `npm run build` in `frontend/` |
 | `make check` | `fmt-check`, `clippy`, `contract-test`, `build-contract`, `build-frontend` (expects `frontend/node_modules` already) |
 | `make ci` | `install-rust-target`, `install-frontend`, then the same steps as `make check` (use from a clean clone) |
