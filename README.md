@@ -1,0 +1,355 @@
+# Soroban Fullstack POC
+
+A lightweight end-to-end Soroban smart contract proof-of-concept built with Rust, Soroban SDK, React, and Stellar testnet tooling.
+
+This repository is intended to validate the foundational development lifecycle for production-grade Soroban smart contract systems, including:
+
+- Soroban smart contract development
+- Rust-based unit testing
+- Property-style / fuzz-style testing
+- Static analysis and formatting
+- Deployment to Stellar testnet
+- Frontend wallet and contract interaction
+- Event emission for indexing pipelines
+- Foundation for observability and security tooling
+
+The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow.
+
+---
+
+# Goals
+
+This POC validates:
+
+- Rust + Soroban contract development workflow
+- Local testing and deterministic execution
+- Contract deployment to Stellar testnet
+- Frontend integration using Stellar SDKs
+- Read/write transaction flow
+- Event generation for indexing systems
+- Foundation for future monitoring, observability, and auditing integrations
+
+---
+
+# Tech Stack
+
+## Smart Contracts
+
+- Rust
+- Soroban SDK
+- Stellar CLI
+- Cargo
+- wasm32 target
+
+## Frontend
+
+- Next.js (App Router)
+- React
+- TypeScript
+- `@stellar/stellar-sdk` (JavaScript Stellar SDK, including Soroban RPC)
+
+## Testing & Tooling
+
+- cargo test
+- cargo fmt
+- cargo clippy
+- property-style tests
+- fuzz/invariant testing foundation
+
+## Future Extensions
+
+- Firehose/Substreams indexing
+- OpenZeppelin monitoring
+- Certora analysis
+- Runtime verification
+- Wallet integrations
+- CI/CD pipelines
+
+---
+
+# Repository Structure
+
+```txt
+soroban-fullstack-poc/
+│
+├── contracts/
+│   └── basic-storage/
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           └── test.rs
+│
+├── frontend/
+│   ├── package.json
+│   ├── app/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   └── lib/
+│       └── stellar.ts
+│
+├── scripts/
+│   └── deploy-testnet.sh
+│
+└── README.md
+```
+
+---
+
+# Smart Contract
+
+The initial Soroban contract is intentionally simple:
+
+- `set(value)`
+- `get()`
+
+The contract also emits events for downstream indexing and observability testing.
+
+Example event (SDK 23+ `contractevent` style):
+
+```rust
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct ValueSet {
+    pub value: u32,
+}
+
+// In `set`:
+ValueSet { value }.publish(&env);
+```
+
+This allows future testing with:
+
+- Firehose
+- Substreams
+- Ledger-style indexing systems
+- Event streaming pipelines
+
+---
+
+# Local Development
+
+## Prerequisites
+
+Install:
+
+- Rust
+- Cargo
+- Stellar CLI
+- Node.js
+- pnpm or npm
+
+---
+
+# Install Rust Target
+
+```bash
+rustup target add wasm32v1-none
+```
+
+---
+
+# Run Smart Contract Tests
+
+```bash
+cd contracts/basic-storage
+
+cargo test
+```
+
+---
+
+# Formatting
+
+```bash
+cargo fmt
+```
+
+---
+
+# Static Analysis
+
+```bash
+cargo clippy --all-targets -- -D warnings
+```
+
+---
+
+# Build Contract
+
+From the contract crate directory:
+
+```bash
+cd contracts/basic-storage
+stellar contract build
+```
+
+---
+
+# Deploy to Stellar Testnet
+
+From the repository root:
+
+```bash
+./scripts/deploy-testnet.sh
+```
+
+---
+
+# Frontend
+
+The frontend is intentionally lightweight and integration-focused.
+
+Goals:
+
+- Connect to Stellar testnet
+- Configure deployed contract address
+- Read contract state
+- Submit write transactions
+- Validate SDK and wallet interaction flow
+
+---
+
+# Frontend Setup
+
+```bash
+cd frontend
+
+npm install
+npm run dev
+```
+
+Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`).
+
+---
+
+# Testing Strategy
+
+## Unit Tests
+
+Validate:
+
+- setter/getter correctness
+- deterministic state updates
+- storage behavior
+
+## Property-Style Tests
+
+Validate repeated state transitions across multiple values.
+
+Example:
+
+```rust
+for value in 0u32..100u32 {
+    client.set(&value);
+    assert_eq!(client.get(), value);
+}
+```
+
+## Future Security Testing
+
+Planned extensions include:
+
+- fuzz testing
+- mutation testing
+- invariant testing
+- formal verification
+- static analysis tooling
+
+---
+
+# Observability & Monitoring
+
+Future integrations may include:
+
+- OpenZeppelin Monitor
+- Hypernative
+- structured event indexing
+- transaction monitoring
+- contract alerting
+
+---
+
+# Indexing & Data Pipeline
+
+This repository is structured to support future indexing experimentation with:
+
+- Firehose
+- Substreams
+- Ledger-style indexing systems
+- event streaming architectures
+
+The contract emits structured events specifically to support this future work.
+
+---
+
+# Wallet & SDK Integrations
+
+Current focus:
+
+- `@stellar/stellar-sdk` (Soroban RPC and transactions)
+- testnet transaction flow
+
+Future exploration:
+
+- Blockdaemon wallet support
+- institutional custody integrations
+- wallet abstraction layers
+
+---
+
+# Security Mindset
+
+This repository is designed with a security-first mindset:
+
+- deterministic testing
+- clean modular code
+- static analysis
+- strong typing
+- reproducible builds
+- event visibility
+- observability hooks
+
+The goal is to establish a strong development foundation before introducing production business logic.
+
+---
+
+# Future Expansion
+
+Potential future areas:
+
+- ERC20-equivalent Soroban contracts
+- role registries
+- permissioning systems
+- compliance modules
+- tokenization primitives
+- frontend orchestration flows
+- production CI/CD
+- multi-contract deployment systems
+
+---
+
+# Status
+
+Current phase:
+
+- foundational SDLC validation
+- tooling evaluation
+- frontend integration validation
+- deployment workflow validation
+- indexing/event pipeline validation
+
+---
+
+## POC Validation Checklist
+
+- [ ] Soroban contract builds locally
+- [ ] Unit tests pass
+- [ ] Property-style roundtrip test passes
+- [ ] Formatting enforced with cargo fmt
+- [ ] Linting enforced with cargo clippy
+- [ ] Contract deploys to Stellar testnet
+- [ ] Contract can be invoked from CLI
+- [ ] React frontend can read contract state
+- [ ] React frontend can submit write transaction
+- [ ] Contract emits event usable for Firehose/Substreams indexing
