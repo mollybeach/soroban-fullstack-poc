@@ -1,12 +1,14 @@
 # Soroban fullstack POC — common tasks from repo root
 .DEFAULT_GOAL := help
 SHELL := /bin/bash
+# So `make` finds Homebrew-installed `stellar` the same way interactive zsh does
+export PATH := $(HOME)/.cargo/bin:/opt/homebrew/bin:/usr/local/bin:$(PATH)
 
 REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
 FRONTEND_DIR := $(REPO_ROOT)/frontend
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test clippy build-contract build-frontend check ci clean clean-frontend deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -54,7 +56,10 @@ clean: ## Remove contract target/ and Next.js .next/, out/, dist/
 clean-frontend: ## Remove frontend node_modules (next step: make install-frontend or make build-frontend)
 	rm -rf "$(FRONTEND_DIR)/node_modules"
 
-deploy: ## Deploy WASM to Stellar testnet (optional: make deploy SOURCE_ACCOUNT=my-alias)
+stellar-identity: ## Create and fund default testnet identity if missing (override: make stellar-identity NAME=my-alias)
+	"$(REPO_ROOT)/scripts/setup-testnet-identity.sh" $(NAME)
+
+deploy: ## Deploy to testnet (needs stellar; run stellar-identity once; optional SOURCE_ACCOUNT=my-alias)
 	$(REPO_ROOT)/scripts/deploy-testnet.sh $(SOURCE_ACCOUNT)
 
 dev-frontend: ## Start Next dev server (install-frontend first if needed)

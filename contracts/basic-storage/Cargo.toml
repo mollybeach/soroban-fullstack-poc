@@ -6,6 +6,10 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+# Required by `stellar contract build` (CLI v26+) for Soroban release wasm
+[profile.release]
+overflow-checks = true
+
 [dependencies]
 soroban-sdk = "23.0.0"
 

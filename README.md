@@ -90,7 +90,8 @@ soroban-fullstack-poc/
 │       └── stellar.ts
 │
 ├── scripts/
-│   └── deploy-testnet.sh
+│   ├── deploy-testnet.sh
+│   └── setup-testnet-identity.sh
 │
 ├── Makefile
 └── README.md
@@ -151,7 +152,7 @@ From the **repository root**, run `make` or `make help` to list targets.
 | Target | Command run (summary) |
 |--------|------------------------|
 | `make help` | Print all targets and short descriptions |
-| `make install` | `rustup target add wasm32v1-none` and `npm install` in `frontend/` |
+| `make install` | `rustup target add wasm32v1-none` and `npm ci` in `frontend/` |
 | `make install-rust-target` | Add the `wasm32v1-none` Rust target for Soroban wasm builds |
 | `make install-frontend` | `npm ci` in `frontend/` (clean install from `package-lock.json`) |
 | `make fmt` | `cargo fmt` in `contracts/basic-storage/` |
@@ -164,7 +165,8 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make ci` | `install-rust-target`, `install-frontend`, then the same steps as `make check` (use from a clean clone) |
 | `make clean` | Remove `contracts/basic-storage/target/` and `frontend/.next/`, `out/`, `dist/` |
 | `make clean-frontend` | Remove `frontend/node_modules/` (then run `make install-frontend` or `make build-frontend`) |
-| `make deploy` | `./scripts/deploy-testnet.sh` (optional: `make deploy SOURCE_ACCOUNT=my-stellar-alias`) |
+| `make stellar-identity` | `./scripts/setup-testnet-identity.sh` — create and fund **`soroban-poc-deployer`** on testnet if missing (`NAME=` to pick another alias) |
+| `make deploy` | `./scripts/deploy-testnet.sh` — defaults to identity **`soroban-poc-deployer`**; optional `SOURCE_ACCOUNT=` or env **`STELLAR_SOURCE_ACCOUNT`** |
 | `make dev-frontend` | `npm run dev` in `frontend/` |
 
 Typical first-time setup and verification:
@@ -224,15 +226,39 @@ cd contracts/basic-storage
 stellar contract build
 ```
 
+Recent **Stellar CLI** releases (for example **v26+**) require **`overflow-checks = true`** under **`[profile.release]`** in the contract `Cargo.toml`; this repo sets that so `stellar contract build` and **`make deploy`** succeed.
+
 ---
 
 # Deploy to Stellar Testnet
 
+You must have the **[Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli)** installed. Deploy calls `stellar contract build` and `stellar contract deploy` (not plain Cargo).
+
+## Source account (identity)
+
+Deploy needs a **funded testnet identity** in the Stellar CLI. This repo defaults to the identity name **`soroban-poc-deployer`**.
+
+**First time only** — create that identity and fund it via friendbot:
+
+```bash
+make stellar-identity
+```
+
+Equivalent: `./scripts/setup-testnet-identity.sh` (optional name: `./scripts/setup-testnet-identity.sh my-alias` or `make stellar-identity NAME=my-alias`).
+
+Use another identity: `make deploy SOURCE_ACCOUNT=my-alias`, or set **`STELLAR_SOURCE_ACCOUNT`** before calling `./scripts/deploy-testnet.sh`.
+
+## Run deploy
+
 From the repository root:
 
 ```bash
-./scripts/deploy-testnet.sh
+make deploy
 ```
+
+Or `./scripts/deploy-testnet.sh` (first argument is the source identity name if not using the default).
+
+The root **`Makefile`** prepends common install locations to **`PATH`** so **`make deploy`** usually finds Homebrew’s **`stellar`** even when bare **`make`** would not.
 
 ---
 
