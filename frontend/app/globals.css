@@ -23,3 +23,69 @@ button {
 input {
   max-width: 8rem;
 }
+
+.tx-log {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #cbd5e1;
+}
+
+.tx-log h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: #334155;
+}
+
+.tx-log-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.tx-log-toolbar button {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.tx-log-panel {
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.tx-log-line {
+  margin: 0;
+  padding: 0.15rem 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tx-log-line--ok {
+  color: #15803d;
+}
+
+.tx-log-line--warn {
+  color: #b45309;
+}
+
+.tx-log-line--error {
+  color: #b91c1c;
+}
+
+.tx-log-line--info {
+  color: #475569;
+}
+
+.tx-log-empty {
+  margin: 0;
+  color: #94a3b8;
+  font-style: italic;
+}
