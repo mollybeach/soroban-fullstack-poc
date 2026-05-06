@@ -1,0 +1,22 @@
+[package]
+name = "basic-storage-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+basic-storage = { path = ".." }
+libfuzzer-sys = "0.4"
+soroban-sdk = { version = "23.0.0", features = ["testutils"] }
+
+[[bin]]
+name = "storage_set_get"
+path = "fuzz_targets/storage_set_get.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]

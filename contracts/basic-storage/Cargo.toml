@@ -14,4 +14,5 @@ overflow-checks = true
 soroban-sdk = "23.0.0"
 
 [dev-dependencies]
+proptest = "1.4"
 soroban-sdk = { version = "23.0.0", features = ["testutils"] }
