@@ -153,16 +153,17 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make help` | Print all targets and short descriptions |
 | `make install` | `rustup target add wasm32v1-none` and `npm install` in `frontend/` |
 | `make install-rust-target` | Add the `wasm32v1-none` Rust target for Soroban wasm builds |
-| `make install-frontend` | `npm install` in `frontend/` |
+| `make install-frontend` | `npm ci` in `frontend/` (clean install from `package-lock.json`) |
 | `make fmt` | `cargo fmt` in `contracts/basic-storage/` |
 | `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
 | `make contract-test` | `cargo test` in `contracts/basic-storage/` |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
 | `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |
-| `make build-frontend` | `npm run build` in `frontend/` |
+| `make build-frontend` | `npm run build` in `frontend/`; runs `npm ci` first if `react/cjs` is missing (fixes incomplete installs) |
 | `make check` | `fmt-check`, `clippy`, `contract-test`, `build-contract`, `build-frontend` (expects `frontend/node_modules` already) |
 | `make ci` | `install-rust-target`, `install-frontend`, then the same steps as `make check` (use from a clean clone) |
 | `make clean` | Remove `contracts/basic-storage/target/` and `frontend/.next/`, `out/`, `dist/` |
+| `make clean-frontend` | Remove `frontend/node_modules/` (then run `make install-frontend` or `make build-frontend`) |
 | `make deploy` | `./scripts/deploy-testnet.sh` (optional: `make deploy SOURCE_ACCOUNT=my-stellar-alias`) |
 | `make dev-frontend` | `npm run dev` in `frontend/` |
 
@@ -259,6 +260,8 @@ npm run dev
 ```
 
 Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`).
+
+If `next build` fails with **`Cannot find module './cjs/react.production.js'`**, your `node_modules` tree is incomplete. From the repo root run **`make install-frontend`** or **`make build-frontend`** (the Makefile refreshes deps when that file is missing), or remove modules with **`make clean-frontend`** and install again.
 
 ---
 

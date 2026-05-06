@@ -6,7 +6,7 @@ REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
 FRONTEND_DIR := $(REPO_ROOT)/frontend
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test clippy build-contract build-frontend check ci clean deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test clippy build-contract build-frontend check ci clean clean-frontend deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -14,8 +14,8 @@ help: ## Show available targets and short descriptions
 install-rust-target: ## Add wasm32v1-none (required for stellar contract build)
 	rustup target add wasm32v1-none
 
-install-frontend: ## Install frontend npm dependencies
-	cd $(FRONTEND_DIR) && npm install
+install-frontend: ## Install frontend deps from lockfile (npm ci; fixes incomplete node_modules)
+	cd "$(FRONTEND_DIR)" && npm ci
 
 install: install-rust-target install-frontend ## Bootstrap Rust wasm target and frontend node_modules
 
@@ -39,15 +39,20 @@ build-contract: ## Build Soroban WASM (stellar if installed, else cargo release 
 		cd "$(CONTRACT_DIR)" && cargo build --target wasm32v1-none --release; \
 	fi
 
-build-frontend: ## Production Next.js build (run install-frontend first if node_modules is missing)
-	cd $(FRONTEND_DIR) && npm run build
+build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is missing)
+	cd "$(FRONTEND_DIR)" && \
+	( [ -f node_modules/react/cjs/react.production.js ] || ( echo "npm: refreshing dependencies (react/cjs missing)" >&2 && npm ci ) ) && \
+	npm run build
 
-check: fmt-check clippy contract-test build-contract build-frontend ## Verify contract + frontend (expects node_modules; use `make ci` from a clean clone)
+check: fmt-check clippy contract-test build-contract build-frontend ## Verify contract + frontend (auto npm ci when React tree is broken)
 
 ci: install-rust-target install-frontend fmt-check clippy contract-test build-contract build-frontend ## Bootstrap then run full verification (Rust target, npm, fmt, clippy, tests, wasm, Next build)
 
 clean: ## Remove contract target/ and Next.js .next/, out/, dist/
 	rm -rf $(CONTRACT_DIR)/target $(FRONTEND_DIR)/.next $(FRONTEND_DIR)/out $(FRONTEND_DIR)/dist
+
+clean-frontend: ## Remove frontend node_modules (next step: make install-frontend or make build-frontend)
+	rm -rf "$(FRONTEND_DIR)/node_modules"
 
 deploy: ## Deploy WASM to Stellar testnet (optional: make deploy SOURCE_ACCOUNT=my-alias)
 	$(REPO_ROOT)/scripts/deploy-testnet.sh $(SOURCE_ACCOUNT)
