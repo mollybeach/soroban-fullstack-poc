@@ -53,6 +53,7 @@ This POC validates:
 - cargo test
 - cargo fmt
 - cargo clippy
+- GNU Make (`Makefile` at repo root)
 - property-style tests
 - fuzz/invariant testing foundation
 
@@ -91,6 +92,7 @@ soroban-fullstack-poc/
 ├── scripts/
 │   └── deploy-testnet.sh
 │
+├── Makefile
 └── README.md
 ```
 
@@ -138,6 +140,43 @@ Install:
 - Stellar CLI
 - Node.js
 - pnpm or npm
+- GNU Make (optional; wraps the commands below)
+
+---
+
+# Makefile
+
+From the **repository root**, run `make` or `make help` to list targets.
+
+| Target | Command run (summary) |
+|--------|------------------------|
+| `make help` | Print all targets and short descriptions |
+| `make install` | `rustup target add wasm32v1-none` and `npm install` in `frontend/` |
+| `make install-rust-target` | Add the `wasm32v1-none` Rust target for Soroban wasm builds |
+| `make install-frontend` | `npm install` in `frontend/` |
+| `make fmt` | `cargo fmt` in `contracts/basic-storage/` |
+| `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
+| `make contract-test` | `cargo test` in `contracts/basic-storage/` |
+| `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
+| `make build-contract` | `stellar contract build` in `contracts/basic-storage/` |
+| `make build-frontend` | `npm run build` in `frontend/` |
+| `make check` | `fmt-check`, `clippy`, `contract-test`, `build-contract`, `build-frontend` (expects `frontend/node_modules` already) |
+| `make ci` | `install-rust-target`, `install-frontend`, then the same steps as `make check` (use from a clean clone) |
+| `make clean` | Remove `contracts/basic-storage/target/` and `frontend/.next/`, `out/`, `dist/` |
+| `make deploy` | `./scripts/deploy-testnet.sh` (optional: `make deploy SOURCE_ACCOUNT=my-stellar-alias`) |
+| `make dev-frontend` | `npm run dev` in `frontend/` |
+
+Typical first-time setup and verification:
+
+```bash
+make ci
+```
+
+Day-to-day after dependencies are installed:
+
+```bash
+make check
+```
 
 ---
 
