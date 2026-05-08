@@ -3,7 +3,8 @@ import { Download, Film } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Demo | Soroban Fullstack POC",
-  description: "Screen recording of the Soroban testnet POC in action",
+  description:
+    "Screen recording: testnet reads, Stellar Expert, Freighter writes, and transaction log for the Soroban POC.",
 };
 
 /** Place your exported file at `public/demo/recording.mp4` (or webm). */
@@ -20,12 +21,13 @@ export default function DemoPage() {
           Demo
         </h1>
         <p className="mt-4 text-slate-600 leading-relaxed">
-          Screen recording of the app (contract reads, Freighter writes, and
-          transaction log). Add your file as{" "}
-          <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm text-violet-900">
-            frontend/public/demo/recording.mp4
-          </code>{" "}
-          — then refresh this page.
+          This is a screen recording of the live app on Stellar testnet: simulated reads
+          refreshing the four stored fields, opening the contract on Stellar Expert, connecting
+          Freighter, then walking each write (<code className="rounded bg-violet-100 px-1 text-sm">set</code>,{" "}
+          <code className="rounded bg-violet-100 px-1 text-sm">set_signed</code>,{" "}
+          <code className="rounded bg-violet-100 px-1 text-sm">set_tag</code>,{" "}
+          <code className="rounded bg-violet-100 px-1 text-sm">set_counter</code>) so you can follow
+          the transaction log and on-chain events side by side with the UI.
         </p>
       </div>
       <div className="overflow-hidden rounded-3xl border border-violet-200 bg-slate-950 shadow-2xl shadow-violet-200/40 ring-1 ring-white/10">
