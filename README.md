@@ -15,6 +15,8 @@ This repository is intended to validate the foundational development lifecycle f
 
 The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow.
 
+**Extra docs:** [Stellar / Soroban libraries](docs/STELLAR_LIBRARIES.md) · [POC workstream ↔ repo map](docs/POC_WORKSTREAM_TRACKING.md) (testing, FE, indexing, tooling checklist).
+
 ---
 
 # Goals
@@ -73,9 +75,16 @@ This POC validates:
 ```txt
 soroban-fullstack-poc/
 │
+├── docs/
+│   ├── STELLAR_LIBRARIES.md
+│   └── POC_WORKSTREAM_TRACKING.md
+│
 ├── contracts/
 │   └── basic-storage/
 │       ├── Cargo.toml
+│       ├── fuzz/
+│       ├── tests/
+│       │   └── integration_contract.rs
 │       └── src/
 │           ├── lib.rs
 │           └── test.rs
@@ -85,7 +94,11 @@ soroban-fullstack-poc/
 │   ├── app/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
+│   │   ├── demo/page.tsx
 │   │   └── globals.css
+│   ├── components/
+│   │   └── SiteHeader.tsx
+│   ├── public/demo/
 │   └── lib/
 │       └── stellar.ts
 │
@@ -101,14 +114,18 @@ soroban-fullstack-poc/
 
 # Smart Contract
 
-The initial Soroban contract is intentionally simple:
+The Soroban contract exposes small storage setters and getters for **indexer demos** (multiple event shapes on testnet):
 
-- `set(value)`
-- `get()`
+| API | Event emitted (single-value `contractevent`) |
+|-----|-----------------------------------------------|
+| `set(u32)` / `get()` | `ValueSet { value }` |
+| `set_signed(i32)` / `get_signed()` | `SignedSet { v }` |
+| `set_tag(String)` / `get_tag()` | `TagSet { label }` |
+| `set_counter(u64)` / `get_counter()` | `CounterSet { n }` |
 
-The contract also emits events for downstream indexing and observability testing.
+After changing the contract, **redeploy** wasm and set **`NEXT_PUBLIC_CONTRACT_ID`** again; older deployments will not expose the new entrypoints.
 
-Example event (SDK 23+ `contractevent` style):
+Example (`ValueSet` — same pattern for the other structs):
 
 ```rust
 #[contractevent(data_format = "single-value")]
@@ -157,7 +174,10 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make install-frontend` | `npm ci` in `frontend/` (clean install from `package-lock.json`) |
 | `make fmt` | `cargo fmt` in `contracts/basic-storage/` |
 | `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
-| `make contract-test` | `cargo test` in `contracts/basic-storage/` |
+| `make contract-test` | `cargo test` in `contracts/basic-storage/` (unit + `tests/integration_contract.rs` + proptest/fuzz-style cases) |
+| `make contract-integration` | `cargo test --test integration_contract` only |
+| `make contract-coverage` | `cargo llvm-cov test` with HTML report under `contracts/basic-storage/target/llvm-cov-html/` (requires `cargo install cargo-llvm-cov`) |
+| `make contract-fuzz-smoke` | Short `cargo fuzz run storage_set_get` in `contracts/basic-storage/fuzz` (requires `cargo install cargo-fuzz`) |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
 | `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |
 | `make build-frontend` | `npm run build` in `frontend/`; runs `npm ci` first if `react/cjs` is missing (fixes incomplete installs) |
@@ -228,6 +248,8 @@ stellar contract build
 
 Recent **Stellar CLI** releases (for example **v26+**) require **`overflow-checks = true`** under **`[profile.release]`** in the contract `Cargo.toml`; this repo sets that so `stellar contract build` and **`make deploy`** succeed.
 
+**WASM / size:** Release wasm comes from `stellar contract build` (or `cargo build --target wasm32v1-none --release`). For production hardening, follow current Stellar docs on wasm size and cost (optimization flags, avoiding unnecessary deps in the contract crate).
+
 ---
 
 # Deploy to Stellar Testnet
@@ -273,6 +295,7 @@ Goals:
 - Read contract state
 - Submit write transactions
 - Validate SDK and wallet interaction flow
+- **`/demo`** page for an optional screen recording (`public/demo/recording.mp4`)
 
 ---
 
@@ -301,6 +324,12 @@ Validate:
 - deterministic state updates
 - storage behavior
 
+See `contracts/basic-storage/src/test.rs`.
+
+## Integration-Style Tests
+
+Multi-step flows in a single Soroban `Env` live in `contracts/basic-storage/tests/integration_contract.rs` (separate test binary; run with `make contract-integration` or full `make contract-test`).
+
 ## Property-Style Tests
 
 Validate repeated state transitions across multiple values.
@@ -314,15 +343,35 @@ for value in 0u32..100u32 {
 }
 ```
 
+## Fuzz and invariants
+
+- **Property / fuzz-style:** `proptest` in `src/test.rs` (`fuzz_set_get_random_u32`, `invariant_last_write_visible_on_get`).
+- **LibFuzzer harness:** `contracts/basic-storage/fuzz/` — run `make contract-fuzz-smoke` after `cargo install cargo-fuzz`.
+
+## Coverage
+
+Host-side coverage over `cargo test` (including contract logic exercised in tests):
+
+```bash
+make contract-coverage
+```
+
+Requires **`cargo install cargo-llvm-cov`**. Open the printed `index.html` for line coverage (what is *not* red is exercised under the current test suite).
+
+## Static analysis
+
+- **`make clippy`** — deny warnings on all targets.
+- **`make fmt-check`** — formatting gate.
+
+Optional dependency policy tools (`cargo audit`, `cargo deny`) are listed in [docs/STELLAR_LIBRARIES.md](docs/STELLAR_LIBRARIES.md).
+
 ## Future Security Testing
 
-Planned extensions include:
+Further extensions (not in this minimal crate) include:
 
-- fuzz testing
 - mutation testing
-- invariant testing
-- formal verification
-- static analysis tooling
+- formal verification (vendor / Soroban-specific flows)
+- richer fuzz targets for auth, upgrade, and cross-contract bugs as the surface grows
 
 ---
 
@@ -349,6 +398,8 @@ This repository is structured to support future indexing experimentation with:
 
 The contract emits structured events specifically to support this future work.
 
+**Frontend + Substreams (no The Graph on Stellar):** this POC app talks **directly** to Soroban RPC for reads/writes. A typical production layout is **Substreams (or Firehose) → your database or API → frontend**, so the browser consumes **your** indexed view of ledger data and events instead of a hosted Graph subgraph. Point the indexing listener at that middle layer, then optionally add FE reads against the same API for historical event rows.
+
 ---
 
 # Wallet & SDK Integrations
@@ -356,10 +407,11 @@ The contract emits structured events specifically to support this future work.
 Current focus:
 
 - `@stellar/stellar-sdk` (Soroban RPC and transactions)
-- testnet transaction flow
+- `@stellar/freighter-api` for browser signing on testnet
 
 Future exploration:
 
+- **WalletConnect** (and other wallets) once a Stellar-capable signer is chosen for your stack
 - Blockdaemon wallet support
 - institutional custody integrations
 - wallet abstraction layers
@@ -413,7 +465,9 @@ Current phase:
 
 - [ ] Soroban contract builds locally
 - [ ] Unit tests pass
-- [ ] Property-style roundtrip test passes
+- [ ] Integration tests pass (`tests/integration_contract.rs`)
+- [ ] Property-style / proptest and fuzz harness paths exercised (`make contract-test`; optional `make contract-fuzz-smoke`)
+- [ ] Optional: coverage report reviewed (`make contract-coverage`)
 - [ ] Formatting enforced with cargo fmt
 - [ ] Linting enforced with cargo clippy
 - [ ] Contract deploys to Stellar testnet
