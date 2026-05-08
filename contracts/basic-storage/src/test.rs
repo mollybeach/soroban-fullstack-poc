@@ -50,6 +50,38 @@ fn sequential_sets_overwrite_previous_value() {
 }
 
 #[test]
+fn set_signed_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    assert_eq!(client.get_signed(), 0);
+    client.set_signed(&-17i32);
+    assert_eq!(client.get_signed(), -17);
+}
+
+#[test]
+fn set_tag_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    let label = String::from_str(&env, "hello-events");
+    client.set_tag(&label);
+    assert_eq!(client.get_tag(), label);
+}
+
+#[test]
+fn set_counter_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    client.set_counter(&99u64);
+    assert_eq!(client.get_counter(), 99);
+}
+
+#[test]
 fn property_set_get_roundtrip_for_many_values() {
     let env = Env::default();
     let contract_id = env.register(BasicStorageContract, ());
