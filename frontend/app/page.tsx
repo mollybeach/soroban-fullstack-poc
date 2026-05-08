@@ -10,7 +10,13 @@ import {
 import { isConnected, requestAccess } from "@stellar/freighter-api";
 import {
   readStoredU32,
+  readSigned,
+  readTag,
+  readCounter,
   writeStoredU32,
+  writeSigned,
+  writeTag,
+  writeCounter,
   getConfiguredContractId,
 } from "@/lib/stellar";
 
@@ -25,8 +31,14 @@ type LogLine = {
 
 export default function HomePage() {
   const [stored, setStored] = useState<number | null>(null);
+  const [storedSigned, setStoredSigned] = useState<number | null>(null);
+  const [storedTag, setStoredTag] = useState<string | null>(null);
+  const [storedCounter, setStoredCounter] = useState<string | null>(null);
   const [loadingRead, setLoadingRead] = useState(false);
   const [writeInput, setWriteInput] = useState("0");
+  const [signedInput, setSignedInput] = useState("0");
+  const [tagInput, setTagInput] = useState("hello");
+  const [counterInput, setCounterInput] = useState("0");
   const [status, setStatus] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [txLog, setTxLog] = useState<LogLine[]>([]);
@@ -50,14 +62,32 @@ export default function HomePage() {
     setLoadingRead(true);
     setStatus(null);
     try {
-      const v = await readStoredU32();
+      const [v, s, t, c] = await Promise.all([
+        readStoredU32(),
+        readSigned(),
+        readTag(),
+        readCounter(),
+      ]);
       setStored(v);
-      appendLog("ok", `get() → stored u32 = ${v}`);
+      setStoredSigned(s);
+      setStoredTag(t);
+      setStoredCounter(c.toString());
+      appendLog(
+        "ok",
+        `reads → u32=${v}, i32=${s}, tag=${JSON.stringify(t)}, u64=${c.toString()}`,
+      );
     } catch (e) {
       setStored(null);
+      setStoredSigned(null);
+      setStoredTag(null);
+      setStoredCounter(null);
       const msg = e instanceof Error ? e.message : String(e);
       setStatus(msg);
-      appendLog("error", `get() failed: ${msg}`);
+      appendLog("error", `read failed: ${msg}`);
+      appendLog(
+        "warn",
+        "If the contract predates set_signed/set_tag/set_counter, redeploy wasm and update NEXT_PUBLIC_CONTRACT_ID.",
+      );
     } finally {
       setLoadingRead(false);
     }
@@ -97,14 +127,20 @@ export default function HomePage() {
     appendLog("ok", `Wallet connected: ${access.address}`);
   }
 
-  async function onSubmitSet(e: FormEvent) {
-    e.preventDefault();
+  async function requireWallet(): Promise<string | null> {
     if (!publicKey) {
       const msg = "Connect Freighter first to submit a write transaction.";
       setStatus(msg);
       appendLog("warn", msg);
-      return;
+      return null;
     }
+    return publicKey;
+  }
+
+  async function onSubmitSet(e: FormEvent) {
+    e.preventDefault();
+    const pk = await requireWallet();
+    if (!pk) return;
     const n = Number(writeInput);
     if (!Number.isFinite(n)) {
       const msg = "Enter a numeric value for set().";
@@ -116,20 +152,86 @@ export default function HomePage() {
     setStatus("Signing and submitting…");
     appendLog("info", `set(${value}): awaiting signature in Freighter…`);
     try {
-      const sent = await writeStoredU32(value, publicKey);
+      const sent = await writeStoredU32(value, pk);
       appendLog(
         "ok",
-        `set(${value}) submitted. Contract return value: ${String(sent.result)}`,
+        `set(${value}) submitted. Result: ${String(sent.result)}`,
       );
-      // `refresh()` clears status at start — set success only after read catches up.
       await refresh();
       setStatus(
-        `Submitted. Result: ${String(sent.result)}. Stored value above was refreshed.`,
+        `Submitted. Result: ${String(sent.result)}. Stored values above were refreshed.`,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus(msg);
       appendLog("error", `set(${value}) failed: ${msg}`);
+    }
+  }
+
+  async function onSubmitSigned(e: FormEvent) {
+    e.preventDefault();
+    const pk = await requireWallet();
+    if (!pk) return;
+    const n = Number(signedInput);
+    if (!Number.isFinite(n) || !Number.isInteger(n)) {
+      appendLog("warn", "Enter an integer for set_signed (i32).");
+      return;
+    }
+    const v = Math.trunc(n);
+    setStatus("Signing set_signed…");
+    appendLog("info", `set_signed(${v}): awaiting Freighter…`);
+    try {
+      const sent = await writeSigned(v, pk);
+      appendLog("ok", `set_signed submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      setStatus("set_signed submitted.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(msg);
+      appendLog("error", `set_signed failed: ${msg}`);
+    }
+  }
+
+  async function onSubmitTag(e: FormEvent) {
+    e.preventDefault();
+    const pk = await requireWallet();
+    if (!pk) return;
+    setStatus("Signing set_tag…");
+    appendLog("info", `set_tag(${JSON.stringify(tagInput)}): awaiting Freighter…`);
+    try {
+      const sent = await writeTag(tagInput, pk);
+      appendLog("ok", `set_tag submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      setStatus("set_tag submitted.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(msg);
+      appendLog("error", `set_tag failed: ${msg}`);
+    }
+  }
+
+  async function onSubmitCounter(e: FormEvent) {
+    e.preventDefault();
+    const pk = await requireWallet();
+    if (!pk) return;
+    let n: bigint;
+    try {
+      n = BigInt(counterInput.trim() || "0");
+    } catch {
+      appendLog("warn", "Enter a whole number for set_counter (u64).");
+      return;
+    }
+    setStatus("Signing set_counter…");
+    appendLog("info", `set_counter(${n}): awaiting Freighter…`);
+    try {
+      const sent = await writeCounter(n, pk);
+      appendLog("ok", `set_counter submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      setStatus("set_counter submitted.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setStatus(msg);
+      appendLog("error", `set_counter failed: ${msg}`);
     }
   }
 
@@ -140,25 +242,37 @@ export default function HomePage() {
     contractPreview = "(not configured)";
   }
 
+  const readDisplay = (v: string | number | null) =>
+    loadingRead ? "…" : v === null ? "—" : String(v);
+
   return (
     <main>
       <h1>Soroban fullstack POC</h1>
       <p>
-        Minimal testnet flow: simulate <code>get</code>, submit{" "}
-        <code>set</code> via Freighter.
+        Minimal testnet flow: simulate <code>get*</code>, submit writes via
+        Freighter. Each write emits a contract event (
+        <code>ValueSet</code>, <code>SignedSet</code>, <code>TagSet</code>,{" "}
+        <code>CounterSet</code>).
       </p>
       <p>
         <strong>Contract:</strong> <code>{contractPreview}</code>
       </p>
       <p>
-        <strong>Stored value (get):</strong>{" "}
-        {loadingRead ? "…" : stored === null ? "—" : String(stored)}
+        <strong>Stored u32 (get):</strong> {readDisplay(stored)}
+        <br />
+        <strong>Stored i32 (get_signed):</strong> {readDisplay(storedSigned)}
+        <br />
+        <strong>Stored tag (get_tag):</strong>{" "}
+        {loadingRead ? "…" : storedTag === null ? "—" : storedTag}
+        <br />
+        <strong>Stored u64 (get_counter):</strong>{" "}
+        {readDisplay(storedCounter)}
       </p>
       <p>
         <button
           type="button"
           onClick={() => {
-            appendLog("info", "Manual refresh: simulating get()…");
+            appendLog("info", "Manual refresh: simulating reads…");
             void refresh();
           }}
         >
@@ -178,17 +292,62 @@ export default function HomePage() {
           </span>
         ) : null}
       </p>
-      <form onSubmit={(ev) => void onSubmitSet(ev)}>
-        <label>
-          New value (u32){" "}
-          <input
-            value={writeInput}
-            onChange={(ev) => setWriteInput(ev.target.value)}
-            inputMode="numeric"
-          />
-        </label>{" "}
-        <button type="submit">set() via Freighter</button>
-      </form>
+
+      <section className="write-section">
+        <h2 className="write-section-title">Writes (testnet)</h2>
+        <form onSubmit={(ev) => void onSubmitSet(ev)} className="write-form">
+          <label>
+            New value (u32){" "}
+            <input
+              value={writeInput}
+              onChange={(ev) => setWriteInput(ev.target.value)}
+              inputMode="numeric"
+            />
+          </label>{" "}
+          <button type="submit">set() — ValueSet</button>
+        </form>
+        <form
+          onSubmit={(ev) => void onSubmitSigned(ev)}
+          className="write-form"
+        >
+          <label>
+            Signed (i32){" "}
+            <input
+              value={signedInput}
+              onChange={(ev) => setSignedInput(ev.target.value)}
+              inputMode="numeric"
+            />
+          </label>{" "}
+          <button type="submit">set_signed() — SignedSet</button>
+        </form>
+        <form onSubmit={(ev) => void onSubmitTag(ev)} className="write-form">
+          <label>
+            Tag (string){" "}
+            <input
+              value={tagInput}
+              onChange={(ev) => setTagInput(ev.target.value)}
+              maxLength={200}
+              style={{ maxWidth: "16rem" }}
+            />
+          </label>{" "}
+          <button type="submit">set_tag() — TagSet</button>
+        </form>
+        <form
+          onSubmit={(ev) => void onSubmitCounter(ev)}
+          className="write-form"
+        >
+          <label>
+            Counter (u64){" "}
+            <input
+              value={counterInput}
+              onChange={(ev) => setCounterInput(ev.target.value)}
+              inputMode="numeric"
+            />
+          </label>{" "}
+          <button type="submit">set_counter() — CounterSet</button>
+        </form>
+      </section>
+
       {status ? (
         <p role="status" style={{ color: "#b45309" }}>
           {status}
