@@ -45,47 +45,76 @@ export async function createReadClient(): Promise<BasicStorageClient> {
   return client as BasicStorageClient;
 }
 
+function isClientFn(
+  client: BasicStorageClient,
+  name: keyof BasicStorageClient | string,
+): boolean {
+  const v = (client as unknown as Record<string, unknown>)[name as string];
+  return typeof v === "function";
+}
+
+export type ContractSnapshot = {
+  u32: number;
+  signed: number | null;
+  tag: string | null;
+  counter: bigint | null;
+  hasExtendedApi: boolean;
+};
+
+/**
+ * Simulates all getters present on the **deployed** contract (spec comes from chain).
+ * Older deployments only have `get`; extended fields are null and `hasExtendedApi` is false.
+ */
+export async function readContractSnapshot(): Promise<ContractSnapshot> {
+  const client = await createReadClient();
+  const getTx = await client.get();
+  if (getTx.result === undefined) {
+    throw new Error("Simulation returned no result for get()");
+  }
+  const u32 = getTx.result as number;
+
+  if (
+    !isClientFn(client, "get_signed") ||
+    !isClientFn(client, "get_tag") ||
+    !isClientFn(client, "get_counter")
+  ) {
+    return {
+      u32,
+      signed: null,
+      tag: null,
+      counter: null,
+      hasExtendedApi: false,
+    };
+  }
+
+  const [sTx, tTx, cTx] = await Promise.all([
+    client.get_signed(),
+    client.get_tag(),
+    client.get_counter(),
+  ]);
+
+  if (sTx.result === undefined || tTx.result === undefined || cTx.result === undefined) {
+    throw new Error("Simulation returned no result for extended getters");
+  }
+
+  const cr = cTx.result;
+  const counter = typeof cr === "bigint" ? cr : BigInt(cr as number);
+
+  return {
+    u32,
+    signed: sTx.result as number,
+    tag: tTx.result as string,
+    counter,
+    hasExtendedApi: true,
+  };
+}
+
 /**
  * Simulates `get` on the contract and returns the stored u32 (default 0 on chain).
  */
 export async function readStoredU32(): Promise<number> {
-  const client = await createReadClient();
-  const tx = await client.get();
-  const { result } = tx;
-  if (result === undefined) {
-    throw new Error("Simulation returned no result for get()");
-  }
-  return result as number;
-}
-
-export async function readSigned(): Promise<number> {
-  const client = await createReadClient();
-  const tx = await client.get_signed();
-  const { result } = tx;
-  if (result === undefined) {
-    throw new Error("Simulation returned no result for get_signed()");
-  }
-  return result as number;
-}
-
-export async function readTag(): Promise<string> {
-  const client = await createReadClient();
-  const tx = await client.get_tag();
-  const { result } = tx;
-  if (result === undefined) {
-    throw new Error("Simulation returned no result for get_tag()");
-  }
-  return result as string;
-}
-
-export async function readCounter(): Promise<bigint> {
-  const client = await createReadClient();
-  const tx = await client.get_counter();
-  const { result } = tx;
-  if (result === undefined) {
-    throw new Error("Simulation returned no result for get_counter()");
-  }
-  return typeof result === "bigint" ? result : BigInt(result as number);
+  const { u32 } = await readContractSnapshot();
+  return u32;
 }
 
 function freighterSigner(publicKey: string) {
@@ -118,6 +147,18 @@ async function writeClient(publicKey: string) {
   })) as BasicStorageClient;
 }
 
+const MISSING_EXTENDED =
+  "This contract id’s WASM does not include set_signed / set_tag / set_counter. Run `make deploy` from the repo with the latest contract, then set NEXT_PUBLIC_CONTRACT_ID to the new CONTRACT_ID and redeploy the frontend.";
+
+function requireExtendedWriter(
+  client: BasicStorageClient,
+  method: "set_signed" | "set_tag" | "set_counter",
+): void {
+  if (!isClientFn(client, method)) {
+    throw new Error(MISSING_EXTENDED);
+  }
+}
+
 export async function writeStoredU32(value: number, publicKey: string) {
   if (!Number.isInteger(value) || value < 0 || value > 0xffff_ffff) {
     throw new Error("value must be a u32 in range 0 .. 4294967295");
@@ -135,6 +176,7 @@ export async function writeSigned(v: number, publicKey: string) {
     throw new Error("v must be a signed 32-bit integer");
   }
   const client = await writeClient(publicKey);
+  requireExtendedWriter(client, "set_signed");
   const assembled = await client.set_signed({ v });
   return assembled.signAndSend();
 }
@@ -146,6 +188,7 @@ export async function writeTag(label: string, publicKey: string) {
     throw new Error(`label must be at most ${MAX_TAG_LEN} characters`);
   }
   const client = await writeClient(publicKey);
+  requireExtendedWriter(client, "set_tag");
   const assembled = await client.set_tag({ label });
   return assembled.signAndSend();
 }
@@ -157,6 +200,7 @@ export async function writeCounter(n: bigint, publicKey: string) {
     throw new Error("n must be a u64 in range 0 .. 2^64-1");
   }
   const client = await writeClient(publicKey);
+  requireExtendedWriter(client, "set_counter");
   const assembled = await client.set_counter({ n });
   return assembled.signAndSend();
 }

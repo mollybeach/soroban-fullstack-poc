@@ -9,10 +9,7 @@ import {
 } from "react";
 import { isConnected, requestAccess } from "@stellar/freighter-api";
 import {
-  readStoredU32,
-  readSigned,
-  readTag,
-  readCounter,
+  readContractSnapshot,
   writeStoredU32,
   writeSigned,
   writeTag,
@@ -41,6 +38,8 @@ export default function HomePage() {
   const [counterInput, setCounterInput] = useState("0");
   const [status, setStatus] = useState<string | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  /** `null` until first successful read; then matches on-chain WASM. */
+  const [hasExtendedApi, setHasExtendedApi] = useState<boolean | null>(null);
   const [txLog, setTxLog] = useState<LogLine[]>([]);
   const logIdRef = useRef(0);
   const logPanelRef = useRef<HTMLDivElement>(null);
@@ -62,32 +61,39 @@ export default function HomePage() {
     setLoadingRead(true);
     setStatus(null);
     try {
-      const [v, s, t, c] = await Promise.all([
-        readStoredU32(),
-        readSigned(),
-        readTag(),
-        readCounter(),
-      ]);
-      setStored(v);
-      setStoredSigned(s);
-      setStoredTag(t);
-      setStoredCounter(c.toString());
-      appendLog(
-        "ok",
-        `reads → u32=${v}, i32=${s}, tag=${JSON.stringify(t)}, u64=${c.toString()}`,
-      );
+      const snap = await readContractSnapshot();
+      setStored(snap.u32);
+      setHasExtendedApi(snap.hasExtendedApi);
+      if (snap.hasExtendedApi) {
+        setStoredSigned(snap.signed);
+        setStoredTag(snap.tag);
+        setStoredCounter(snap.counter!.toString());
+        appendLog(
+          "ok",
+          `reads → u32=${snap.u32}, i32=${snap.signed}, tag=${JSON.stringify(snap.tag)}, u64=${snap.counter!.toString()}`,
+        );
+      } else {
+        setStoredSigned(null);
+        setStoredTag(null);
+        setStoredCounter(null);
+        appendLog(
+          "ok",
+          `get() → u32=${snap.u32} (on-chain WASM has no get_signed/get_tag/get_counter for this id)`,
+        );
+        appendLog(
+          "info",
+          "Redeploy the latest `basic-storage` contract and point NEXT_PUBLIC_CONTRACT_ID at the new C… address to enable extended reads and writes.",
+        );
+      }
     } catch (e) {
       setStored(null);
       setStoredSigned(null);
       setStoredTag(null);
       setStoredCounter(null);
+      setHasExtendedApi(null);
       const msg = e instanceof Error ? e.message : String(e);
       setStatus(msg);
       appendLog("error", `read failed: ${msg}`);
-      appendLog(
-        "warn",
-        "If the contract predates set_signed/set_tag/set_counter, redeploy wasm and update NEXT_PUBLIC_CONTRACT_ID.",
-      );
     } finally {
       setLoadingRead(false);
     }
@@ -257,6 +263,16 @@ export default function HomePage() {
       <p>
         <strong>Contract:</strong> <code>{contractPreview}</code>
       </p>
+      {hasExtendedApi === false ? (
+        <p className="contract-notice" role="status">
+          This contract address only exposes the original <code>get</code> /{" "}
+          <code>set</code> (u32). Redeploy the current{" "}
+          <code>basic-storage</code> wasm from this repo, then set{" "}
+          <code>NEXT_PUBLIC_CONTRACT_ID</code> to the new <code>C…</code> id so{" "}
+          <code>SignedSet</code>, <code>TagSet</code>, and <code>CounterSet</code>{" "}
+          calls work.
+        </p>
+      ) : null}
       <p>
         <strong>Stored u32 (get):</strong> {readDisplay(stored)}
         <br />
@@ -316,9 +332,12 @@ export default function HomePage() {
               value={signedInput}
               onChange={(ev) => setSignedInput(ev.target.value)}
               inputMode="numeric"
+              disabled={hasExtendedApi !== true}
             />
           </label>{" "}
-          <button type="submit">set_signed() — SignedSet</button>
+          <button type="submit" disabled={hasExtendedApi !== true}>
+            set_signed() — SignedSet
+          </button>
         </form>
         <form onSubmit={(ev) => void onSubmitTag(ev)} className="write-form">
           <label>
@@ -328,9 +347,12 @@ export default function HomePage() {
               onChange={(ev) => setTagInput(ev.target.value)}
               maxLength={200}
               style={{ maxWidth: "16rem" }}
+              disabled={hasExtendedApi !== true}
             />
           </label>{" "}
-          <button type="submit">set_tag() — TagSet</button>
+          <button type="submit" disabled={hasExtendedApi !== true}>
+            set_tag() — TagSet
+          </button>
         </form>
         <form
           onSubmit={(ev) => void onSubmitCounter(ev)}
@@ -342,9 +364,12 @@ export default function HomePage() {
               value={counterInput}
               onChange={(ev) => setCounterInput(ev.target.value)}
               inputMode="numeric"
+              disabled={hasExtendedApi !== true}
             />
           </label>{" "}
-          <button type="submit">set_counter() — CounterSet</button>
+          <button type="submit" disabled={hasExtendedApi !== true}>
+            set_counter() — CounterSet
+          </button>
         </form>
       </section>
 

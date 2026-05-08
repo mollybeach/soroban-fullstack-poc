@@ -97,6 +97,22 @@ input {
   margin-bottom: 0.75rem;
 }
 
+.contract-notice {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.9rem;
+  color: #1e3a5f;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 6px;
+  max-width: 42rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .tx-log {
   margin-top: 2rem;
   padding-top: 1rem;
