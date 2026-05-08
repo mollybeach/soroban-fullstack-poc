@@ -15,7 +15,7 @@ This repository is intended to validate the foundational development lifecycle f
 
 The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow.
 
-**Extra docs:** [Stellar / Soroban libraries](docs/STELLAR_LIBRARIES.md) · [POC workstream ↔ repo map](docs/POC_WORKSTREAM_TRACKING.md) (testing, FE, indexing, tooling checklist).
+**Extra docs:** [POC deliverables checklist ↔ repo](docs/POC_DELIVERABLES.md) · [Stellar / Soroban libraries](docs/STELLAR_LIBRARIES.md) · [POC workstream ↔ repo map](docs/POC_WORKSTREAM_TRACKING.md).
 
 ---
 
@@ -176,7 +176,8 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
 | `make contract-test` | `cargo test` in `contracts/basic-storage/` (unit + `tests/integration_contract.rs` + proptest/fuzz-style cases) |
 | `make contract-integration` | `cargo test --test integration_contract` only |
-| `make export-test-results` | Runs `node scripts/export-test-results.mjs` → writes `frontend/public/test-results.json` for the **`/tests`** page (same as `npm run export-test-results` in `frontend/`) |
+| `make test-all-contract` / `make test-all` | Run every contract-side test type: full `cargo test` (tee to `contracts/basic-storage/target/.last-full-test.log`) plus libFuzzer smoke when `cargo-fuzz` is installed |
+| `make sync-tests` / `make export-test-results` | Runs **`make test-all-contract`**, then parses that log into `frontend/public/test-results.json` for **`/tests`** (avoids a second `cargo test`; also `npm run export-test-results` / `npm run sync-tests` in `frontend/` still run `cargo test` if you invoke the script alone) |
 | `make contract-coverage` | `cargo llvm-cov test` (HTML under `target/llvm-cov-html/html/`), then `report --text` (summary in terminal) and `report --lcov` → `target/llvm-cov.lcov` (requires `cargo install cargo-llvm-cov`; first run may install `llvm-tools-preview` via rustup) |
 | `make contract-fuzz-smoke` | Short `cargo fuzz run storage_set_get` in `contracts/basic-storage/fuzz` (requires `cargo install cargo-fuzz`) |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |

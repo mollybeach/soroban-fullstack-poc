@@ -8,7 +8,17 @@ REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
 FRONTEND_DIR := $(REPO_ROOT)/frontend
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test contract-integration export-test-results contract-coverage contract-fuzz-smoke clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
+# libFuzzer default is AddressSanitizer; on Apple hosts ASAN + soroban-sdk ctor/dtor hits a
+# linker error ("initializer pointer has no target"). `-s none` still runs libFuzzer with
+# coverage instrumentation; Linux/CI keeps the default ASAN for a stricter smoke run.
+UNAME_S := $(shell uname -s 2>/dev/null || echo unknown)
+ifeq ($(UNAME_S),Darwin)
+FUZZ_SAN_FLAGS := -s none
+else
+FUZZ_SAN_FLAGS :=
+endif
+
+.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend check ci ci-coverage clean clean-frontend stellar-identity deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -24,46 +34,85 @@ install: install-rust-target install-frontend ## Bootstrap Rust wasm target and 
 fmt: ## Format Rust sources in contracts/basic-storage
 	cd $(CONTRACT_DIR) && cargo fmt
 
+format: fmt ## Alias: cargo fmt (POC deliverable naming)
+
 fmt-check: ## Check Rust formatting without modifying files
 	cd $(CONTRACT_DIR) && cargo fmt -- --check
 
 contract-test: ## Run cargo test in contracts/basic-storage (unit + integration + proptest)
 	cd $(CONTRACT_DIR) && cargo test
 
+test: contract-test ## Alias: run contract tests (POC deliverable naming)
+
 contract-integration: ## Run only integration tests (tests/*.rs)
 	cd $(CONTRACT_DIR) && cargo test --test integration_contract
 
-export-test-results: ## Write frontend/public/test-results.json for the /tests page (requires cargo)
-	node "$(REPO_ROOT)/scripts/export-test-results.mjs"
+# Log + exit code for export script (under target/, gitignored)
+CONTRACT_TEST_LOG := $(CONTRACT_DIR)/target/.last-full-test.log
+CONTRACT_TEST_EXIT := $(CONTRACT_DIR)/target/.last-full-test.exit
 
-contract-coverage: ## LLVM coverage: HTML report + lcov + terminal summary (install: cargo install cargo-llvm-cov; first run may add llvm-tools-preview)
+test-all-contract test-all: ## Run every contract-side test type: full `cargo test` + libFuzzer smoke (needs cargo-fuzz + nightly)
+	@mkdir -p "$(CONTRACT_DIR)/target"
+	bash -c 'set -o pipefail; cd "$(CONTRACT_DIR)" && cargo test 2>&1 | tee "$(CONTRACT_TEST_LOG)"; c=$${PIPESTATUS[0]}; echo $$c > "$(CONTRACT_TEST_EXIT)"; exit $$c'
+	@if command -v cargo-fuzz >/dev/null 2>&1; then \
+		if rustup which rustc --toolchain nightly >/dev/null 2>&1; then \
+			cd "$(CONTRACT_DIR)/fuzz" && cargo +nightly fuzz run storage_set_get $(FUZZ_SAN_FLAGS) -- -runs=1000 \
+				|| echo "warning: libFuzzer smoke failed (cargo test above still passed). Check cargo-fuzz, nightly, and Makefile FUZZ_SAN_FLAGS." >&2; \
+		else \
+			echo "note: rustup nightly not installed — skipping libFuzzer (install: rustup toolchain install nightly)"; \
+		fi; \
+	else \
+		echo "note: cargo-fuzz not installed — skipping libFuzzer smoke (install: cargo install cargo-fuzz)"; \
+	fi
+
+sync-tests export-test-results: test-all-contract ## Run test-all-contract then write frontend/public/test-results.json (refreshes /tests)
+	CONTRACT_TEST_LOG_PATH="$(CONTRACT_TEST_LOG)" CONTRACT_TEST_LOG_EXIT="$(CONTRACT_TEST_EXIT)" node "$(REPO_ROOT)/scripts/export-test-results.mjs"
+
+contract-coverage: ## LLVM coverage: HTML + lcov + JSON summary for /tests (install: cargo install cargo-llvm-cov)
 	@if ! cargo llvm-cov --version >/dev/null 2>&1; then \
 		echo "error: cargo-llvm-cov not installed. Run: cargo install cargo-llvm-cov" >&2; \
 		exit 1; \
 	fi
 	cd "$(CONTRACT_DIR)" && cargo llvm-cov test --html --output-dir target/llvm-cov-html
-	cd "$(CONTRACT_DIR)" && cargo llvm-cov report --text
+	cd "$(CONTRACT_DIR)" && cargo llvm-cov report --json --output-path target/llvm-cov-report.json
 	cd "$(CONTRACT_DIR)" && cargo llvm-cov report --lcov --output-path target/llvm-cov.lcov
+	node "$(REPO_ROOT)/scripts/export-coverage-summary.mjs" "$(CONTRACT_DIR)/target/llvm-cov-report.json"
 	@echo ""
 	@echo "HTML report: file://$(CONTRACT_DIR)/target/llvm-cov-html/html/index.html"
-	@echo "LCOV (CI / genhtml): $(CONTRACT_DIR)/target/llvm-cov.lcov"
+	@echo "LCOV: $(CONTRACT_DIR)/target/llvm-cov.lcov"
+	@echo "JSON (machine-readable): $(CONTRACT_DIR)/target/llvm-cov-report.json"
+	@echo "Frontend summary: $(FRONTEND_DIR)/public/coverage-summary.json"
 
-contract-fuzz-smoke: ## Short libFuzzer run (install: cargo install cargo-fuzz)
+coverage: contract-coverage ## Alias: measurable LLVM coverage (POC deliverable naming)
+
+contract-fuzz-smoke: ## Short libFuzzer run (needs cargo-fuzz + nightly; Darwin uses -s none, others default ASAN)
 	@if ! command -v cargo-fuzz >/dev/null 2>&1; then \
 		echo "error: cargo-fuzz not installed. Run: cargo install cargo-fuzz" >&2; \
 		exit 1; \
 	fi
-	cd "$(CONTRACT_DIR)/fuzz" && cargo fuzz run storage_set_get -- -runs=1000
+	@if ! rustup which rustc --toolchain nightly >/dev/null 2>&1; then \
+		echo "error: nightly toolchain required for fuzz. Run: rustup toolchain install nightly" >&2; \
+		exit 1; \
+	fi
+	cd "$(CONTRACT_DIR)/fuzz" && cargo +nightly fuzz run storage_set_get $(FUZZ_SAN_FLAGS) -- -runs=1000
+
+fuzz: contract-fuzz-smoke ## Alias: short libFuzzer smoke (POC deliverable naming)
 
 clippy: ## Run cargo clippy with warnings denied
 	cd $(CONTRACT_DIR) && cargo clippy --all-targets -- -D warnings
+
+lint: clippy ## Alias: cargo clippy -D warnings (POC deliverable naming)
 
 build-contract: ## Build Soroban WASM (stellar if installed, else cargo release for wasm32v1-none)
 	@if command -v stellar >/dev/null 2>&1; then \
 		cd "$(CONTRACT_DIR)" && stellar contract build; \
 	else \
 		echo "stellar: not in PATH — using cargo (install Stellar CLI for deploy: https://developers.stellar.org/docs/tools)" >&2; \
-		cd "$(CONTRACT_DIR)" && cargo build --target wasm32v1-none --release; \
+		cd "$(CONTRACT_DIR)" && cargo build --target wasm32v1-none --release && \
+		if [ ! -f target/wasm32v1-none/release/basic_storage.wasm ]; then \
+			dep=$$(ls target/wasm32v1-none/release/deps/basic_storage*.wasm 2>/dev/null | grep -v ' ' | head -n1); \
+			if [ -n "$$dep" ] && [ -f "$$dep" ]; then cp "$$dep" target/wasm32v1-none/release/basic_storage.wasm; fi; \
+		fi; \
 	fi
 
 build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is missing)
@@ -71,9 +120,13 @@ build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is 
 	( [ -f node_modules/react/cjs/react.production.js ] || ( echo "npm: refreshing dependencies (react/cjs missing)" >&2 && npm ci ) ) && \
 	npm run build
 
+build: build-contract build-frontend ## Alias: WASM + Next production build (POC deliverable naming)
+
 check: fmt-check clippy contract-test build-contract build-frontend ## Verify contract + frontend (auto npm ci when React tree is broken)
 
 ci: install-rust-target install-frontend fmt-check clippy contract-test build-contract build-frontend ## Bootstrap then full verification (Rust target, npm, fmt, clippy, tests, wasm, Next build)
+
+ci-coverage: install-rust-target install-frontend fmt-check clippy contract-test contract-coverage build-contract build-frontend ## Like ci, plus LLVM coverage (requires cargo-llvm-cov; slower)
 
 clean: ## Remove contract target/ and Next.js .next/, out/, dist/
 	rm -rf $(CONTRACT_DIR)/target $(FRONTEND_DIR)/.next $(FRONTEND_DIR)/out $(FRONTEND_DIR)/dist

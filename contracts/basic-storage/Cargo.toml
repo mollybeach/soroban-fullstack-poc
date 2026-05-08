@@ -3,8 +3,13 @@ name = "basic-storage"
 version = "0.1.0"
 edition = "2021"
 
+# Host-only rlib: cargo-fuzz + sanitizer coverage otherwise builds `libbasic_storage.dylib`
+# (cdylib), which fails to link on macOS (undefined sancov symbols with `-s none`, or ASAN +
+# ctor "initializer pointer has no target" with default `-s address`). `stellar contract build`
+# passes `--crate-type=cdylib` for wasm. Plain `cargo build --target wasm32v1-none` leaves the
+# artifact under `target/.../deps/`; `make build-contract` copies it to `release/basic_storage.wasm`.
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 # Required by `stellar contract build` (CLI v26+) for Soroban release wasm
 [profile.release]

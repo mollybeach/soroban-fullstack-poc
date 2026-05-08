@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Documentation | Soroban Fullstack POC",
   description:
-    "How the Soroban testnet POC works: contract storage, events, reads, writes, Freighter, and the home page UI.",
+    "How the Soroban testnet POC works: contract storage, events, reads, writes, Freighter, testing, and the home page UI.",
 };
 
 function Section({
@@ -40,9 +40,11 @@ export default function DocsPage() {
           Documentation
         </h1>
         <p className="mt-4 text-slate-600">
-          This page describes what the project is for, how the pieces fit together, and what each
-          part of the <strong>Home</strong> screen means. For install and Makefile commands, see
-          the repository <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">README.md</code>.
+          This page describes what the project is for, how the pieces fit together, what each part of
+          the <strong>Home</strong> screen means, and how <strong>testing</strong> is wired. For a
+          full command table and install steps, see the repository{" "}
+          <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">README.md</code> and{" "}
+          <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">docs/POC_DELIVERABLES.md</code>.
         </p>
         <p className="mt-3">
           <Link
@@ -98,6 +100,76 @@ export default function DocsPage() {
             picks it up when the dev server starts.
           </li>
         </ul>
+      </Section>
+
+      <Section id="testing" title="Testing and the /tests page">
+        <p>
+          Contract logic in <code className="rounded bg-slate-100 px-1">contracts/basic-storage/</code>{" "}
+          is exercised with <strong>unit tests</strong>, <strong>integration tests</strong> (separate
+          test binary), <strong>Proptest</strong> (random and deterministic cases),{" "}
+          <strong>invariant-style</strong> properties, and an optional <strong>libFuzzer</strong> harness
+          under <code className="rounded bg-slate-100 px-1">fuzz/</code>. The interactive{" "}
+          <Link
+            href="/tests"
+            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+          >
+            /tests
+          </Link>{" "}
+          page reads static JSON generated from the last <code className="rounded bg-slate-100 px-1">cargo test</code>{" "}
+          run and shows line/function coverage when <code className="rounded bg-slate-100 px-1">coverage-summary.json</code>{" "}
+          is present.
+        </p>
+
+        <h3 className="text-base font-semibold text-violet-900">Makefile commands (repo root)</h3>
+        <ul className="list-inside list-disc space-y-2 marker:text-violet-500">
+          <li>
+            <code className="rounded bg-slate-100 px-1">make sync-tests</code> (same as{" "}
+            <code className="rounded bg-slate-100 px-1">make export-test-results</code>) — runs{" "}
+            <code className="rounded bg-slate-100 px-1">make test-all-contract</code>, then writes{" "}
+            <code className="rounded bg-slate-100 px-1">frontend/public/test-results.json</code> for{" "}
+            <strong>/tests</strong>. Use this after changing Rust tests so the UI matches reality.
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1">make test-all-contract</code> and{" "}
+            <code className="rounded bg-slate-100 px-1">make test-all</code> — same recipe: full{" "}
+            <code className="rounded bg-slate-100 px-1">cargo test</code> for the crate, then a short{" "}
+            <code className="rounded bg-slate-100 px-1">cargo fuzz</code> smoke when{" "}
+            <code className="rounded bg-slate-100 px-1">cargo-fuzz</code> and a{" "}
+            <code className="rounded bg-slate-100 px-1">nightly</code> toolchain are installed. Does{" "}
+            <strong>not</strong> update the frontend JSON by itself.
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1">make coverage</code> — LLVM coverage (HTML, LCOV, and{" "}
+            <code className="rounded bg-slate-100 px-1">coverage-summary.json</code>). Requires{" "}
+            <code className="rounded bg-slate-100 px-1">cargo install cargo-llvm-cov</code>. On{" "}
+            <strong>/tests</strong>, branch totals often show as n/a because the LLVM JSON export has
+            no branch counters for this small crate; line and function percentages are the meaningful
+            headline.
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1">make fuzz</code> /{" "}
+            <code className="rounded bg-slate-100 px-1">make contract-fuzz-smoke</code> — libFuzzer only;
+            needs <strong>nightly</strong> and <code className="rounded bg-slate-100 px-1">cargo-fuzz</code>. On{" "}
+            <strong>macOS</strong> the Makefile passes <code className="rounded bg-slate-100 px-1">-s none</code>{" "}
+            (no AddressSanitizer) so linking succeeds; <strong>Linux</strong> uses the default ASAN-backed fuzz
+            build. If fuzz still fails, <code className="rounded bg-slate-100 px-1">make test-all-contract</code>{" "}
+            prints a warning and continues so <code className="rounded bg-slate-100 px-1">make sync-tests</code> can finish.
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1">make ci</code> — format check, Clippy, tests, WASM build, and Next.js production build (see README).
+          </li>
+        </ul>
+
+        <h3 className="mt-6 text-base font-semibold text-violet-900">Without Make</h3>
+        <p>
+          From <code className="rounded bg-slate-100 px-1">frontend/</code>,{" "}
+          <code className="rounded bg-slate-100 px-1">npm run sync-tests</code> and{" "}
+          <code className="rounded bg-slate-100 px-1">npm run export-test-results</code> run the same export
+          script as <code className="rounded bg-slate-100 px-1">make sync-tests</code> but invoke{" "}
+          <code className="rounded bg-slate-100 px-1">cargo test</code> inside the script (they do not run{" "}
+          <code className="rounded bg-slate-100 px-1">test-all-contract</code> first). For a single manual export from the repo root:{" "}
+          <code className="rounded bg-slate-100 px-1">node scripts/export-test-results.mjs</code>.
+        </p>
       </Section>
 
       <Section id="contract" title="The contract: storage, entrypoints, and events">

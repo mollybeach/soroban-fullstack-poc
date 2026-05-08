@@ -112,7 +112,7 @@ proptest! {
     }
 }
 
-// --- Invariant: after any non-empty sequence of sets, get() == last set value ---
+// --- Invariants (Proptest): last-write wins and cross-slot isolation ---
 
 proptest! {
     #![proptest_config(ProptestConfig {
@@ -134,5 +134,86 @@ proptest! {
             expected = *v;
         }
         prop_assert_eq!(client.get(), expected);
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig {
+        cases: 48,
+        .. ProptestConfig::default()
+    })]
+
+    /// After any non-empty sequence of `set_signed`, `get_signed` equals the last value written.
+    #[test]
+    fn invariant_signed_last_write_visible_on_get_signed(
+        values in prop::collection::vec(any::<i32>(), 1..32usize)
+    ) {
+        let env = Env::default();
+        let contract_id = env.register(BasicStorageContract, ());
+        let client = BasicStorageContractClient::new(&env, &contract_id);
+
+        let mut expected = 0i32;
+        for v in &values {
+            client.set_signed(v);
+            expected = *v;
+        }
+        prop_assert_eq!(client.get_signed(), expected);
+    }
+
+    /// After any non-empty sequence of `set_counter`, `get_counter` equals the last value written.
+    #[test]
+    fn invariant_counter_last_write_visible_on_get_counter(
+        values in prop::collection::vec(any::<u64>(), 1..32usize)
+    ) {
+        let env = Env::default();
+        let contract_id = env.register(BasicStorageContract, ());
+        let client = BasicStorageContractClient::new(&env, &contract_id);
+
+        let mut expected = 0u64;
+        for v in &values {
+            client.set_counter(v);
+            expected = *v;
+        }
+        prop_assert_eq!(client.get_counter(), expected);
+    }
+
+    /// Primary `u32` slot stays fixed while only the signed slot is written; signed still last-write wins.
+    #[test]
+    fn invariant_primary_unchanged_under_signed_only_writes(
+        anchor in any::<u32>(),
+        signed_values in prop::collection::vec(any::<i32>(), 1..36usize)
+    ) {
+        let env = Env::default();
+        let contract_id = env.register(BasicStorageContract, ());
+        let client = BasicStorageContractClient::new(&env, &contract_id);
+
+        client.set(&anchor);
+        let mut last = 0i32;
+        for v in &signed_values {
+            client.set_signed(v);
+            prop_assert_eq!(client.get(), anchor);
+            last = *v;
+        }
+        prop_assert_eq!(client.get_signed(), last);
+    }
+
+    /// Signed slot stays fixed while only the primary slot is written; primary still last-write wins.
+    #[test]
+    fn invariant_signed_unchanged_under_primary_only_writes(
+        anchor in any::<i32>(),
+        primary_values in prop::collection::vec(any::<u32>(), 1..36usize)
+    ) {
+        let env = Env::default();
+        let contract_id = env.register(BasicStorageContract, ());
+        let client = BasicStorageContractClient::new(&env, &contract_id);
+
+        client.set_signed(&anchor);
+        let mut last = 0u32;
+        for v in &primary_values {
+            client.set(v);
+            prop_assert_eq!(client.get_signed(), anchor);
+            last = *v;
+        }
+        prop_assert_eq!(client.get(), last);
     }
 }
