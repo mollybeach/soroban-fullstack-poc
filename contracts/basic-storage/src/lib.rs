@@ -1,8 +1,6 @@
 #![no_std]
 
-use soroban_sdk::{
-    contract, contractevent, contractimpl, contracttype, Env, String,
-};
+use soroban_sdk::{contract, contractevent, contractimpl, contracttype, Env, String};
 
 #[contracttype]
 #[derive(Clone)]
@@ -59,7 +57,10 @@ impl BasicStorageContract {
     }
 
     pub fn get_signed(env: Env) -> i32 {
-        env.storage().persistent().get(&DataKey::Signed).unwrap_or(0)
+        env.storage()
+            .persistent()
+            .get(&DataKey::Signed)
+            .unwrap_or(0)
     }
 
     /// Stores a short text label and emits `TagSet` (string payload for indexers).
@@ -85,7 +86,10 @@ impl BasicStorageContract {
     }
 
     pub fn get_counter(env: Env) -> u64 {
-        env.storage().persistent().get(&DataKey::Counter).unwrap_or(0)
+        env.storage()
+            .persistent()
+            .get(&DataKey::Counter)
+            .unwrap_or(0)
     }
 }
 

@@ -176,7 +176,8 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make fmt-check` | `cargo fmt -- --check` in `contracts/basic-storage/` |
 | `make contract-test` | `cargo test` in `contracts/basic-storage/` (unit + `tests/integration_contract.rs` + proptest/fuzz-style cases) |
 | `make contract-integration` | `cargo test --test integration_contract` only |
-| `make contract-coverage` | `cargo llvm-cov test` with HTML report under `contracts/basic-storage/target/llvm-cov-html/` (requires `cargo install cargo-llvm-cov`) |
+| `make export-test-results` | Runs `node scripts/export-test-results.mjs` → writes `frontend/public/test-results.json` for the **`/tests`** page (same as `npm run export-test-results` in `frontend/`) |
+| `make contract-coverage` | `cargo llvm-cov test` (HTML under `target/llvm-cov-html/html/`), then `report --text` (summary in terminal) and `report --lcov` → `target/llvm-cov.lcov` (requires `cargo install cargo-llvm-cov`; first run may install `llvm-tools-preview` via rustup) |
 | `make contract-fuzz-smoke` | Short `cargo fuzz run storage_set_get` in `contracts/basic-storage/fuzz` (requires `cargo install cargo-fuzz`) |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
 | `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |

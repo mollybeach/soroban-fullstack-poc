@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CirclePlay, Wallet, LogOut } from "lucide-react";
+import { BookOpen, CirclePlay, FlaskConical, Wallet, LogOut } from "lucide-react";
 import { useFreighter } from "@/contexts/freighter-context";
 
 function truncateMiddle(s: string, start = 6, end = 4) {
@@ -46,6 +46,20 @@ export function SiteHeader() {
             >
               <CirclePlay className="h-4 w-4" aria-hidden />
               Demo
+            </Link>
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+            >
+              <BookOpen className="h-4 w-4" aria-hidden />
+              Docs
+            </Link>
+            <Link
+              href="/tests"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+            >
+              <FlaskConical className="h-4 w-4" aria-hidden />
+              Tests
             </Link>
           </nav>
         </div>

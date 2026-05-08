@@ -8,7 +8,7 @@ REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
 FRONTEND_DIR := $(REPO_ROOT)/frontend
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test contract-integration contract-coverage contract-fuzz-smoke clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test contract-integration export-test-results contract-coverage contract-fuzz-smoke clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -33,13 +33,20 @@ contract-test: ## Run cargo test in contracts/basic-storage (unit + integration 
 contract-integration: ## Run only integration tests (tests/*.rs)
 	cd $(CONTRACT_DIR) && cargo test --test integration_contract
 
-contract-coverage: ## HTML coverage for contract tests (install: cargo install cargo-llvm-cov)
+export-test-results: ## Write frontend/public/test-results.json for the /tests page (requires cargo)
+	node "$(REPO_ROOT)/scripts/export-test-results.mjs"
+
+contract-coverage: ## LLVM coverage: HTML report + lcov + terminal summary (install: cargo install cargo-llvm-cov; first run may add llvm-tools-preview)
 	@if ! cargo llvm-cov --version >/dev/null 2>&1; then \
 		echo "error: cargo-llvm-cov not installed. Run: cargo install cargo-llvm-cov" >&2; \
 		exit 1; \
 	fi
 	cd "$(CONTRACT_DIR)" && cargo llvm-cov test --html --output-dir target/llvm-cov-html
-	@echo "Open $(CONTRACT_DIR)/target/llvm-cov-html/index.html"
+	cd "$(CONTRACT_DIR)" && cargo llvm-cov report --text
+	cd "$(CONTRACT_DIR)" && cargo llvm-cov report --lcov --output-path target/llvm-cov.lcov
+	@echo ""
+	@echo "HTML report: file://$(CONTRACT_DIR)/target/llvm-cov-html/html/index.html"
+	@echo "LCOV (CI / genhtml): $(CONTRACT_DIR)/target/llvm-cov.lcov"
 
 contract-fuzz-smoke: ## Short libFuzzer run (install: cargo install cargo-fuzz)
 	@if ! command -v cargo-fuzz >/dev/null 2>&1; then \

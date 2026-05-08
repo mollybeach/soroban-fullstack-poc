@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export-test-results": "node ../scripts/export-test-results.mjs"
   },
   "dependencies": {
     "@stellar/freighter-api": "^3.0.0",
