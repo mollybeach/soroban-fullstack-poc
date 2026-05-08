@@ -9,7 +9,9 @@ import {
 } from "react";
 import {
   Binary,
+  ClipboardCopy,
   ExternalLink,
+  FileCode,
   Hash,
   PencilLine,
   RefreshCw,
@@ -70,6 +72,9 @@ export default function HomePage() {
   const [status, setStatus] = useState<string | null>(null);
   /** `null` until first successful read; then matches on-chain WASM. */
   const [hasExtendedApi, setHasExtendedApi] = useState<boolean | null>(null);
+  /** Prevents overlapping submits that reuse the same account sequence (common cause of txBadSeq). */
+  const [writePending, setWritePending] = useState(false);
+  const writeInFlightRef = useRef(false);
   const [txLog, setTxLog] = useState<LogLine[]>([]);
   const logIdRef = useRef(0);
   const logPanelRef = useRef<HTMLDivElement>(null);
@@ -162,8 +167,35 @@ export default function HomePage() {
     return publicKey;
   }
 
+  const appendBadSeqHintIfNeeded = useCallback(
+    (err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/txBadSeq|"name":\s*"txBadSeq"/i.test(msg) || /bad\s*seq/i.test(msg)) {
+        appendLog(
+          "info",
+          "txBadSeq: your account’s sequence moved (often from double-clicking submit or another tab/app sending a tx). Wait until the previous transaction confirms, then submit once—do not start a second submit while Freighter is still open.",
+        );
+      }
+    },
+    [appendLog],
+  );
+
+  const copyLogToClipboard = useCallback(async () => {
+    const text = txLog
+      .map((line) => `[${line.ts}] ${line.message}`)
+      .join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      appendLog("info", "Log copied to clipboard.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      appendLog("error", `Copy failed: ${msg}`);
+    }
+  }, [txLog, appendLog]);
+
   async function onSubmitSet(e: FormEvent) {
     e.preventDefault();
+    if (writeInFlightRef.current) return;
     const pk = await requireWallet();
     if (!pk) return;
     const n = Number(writeInput);
@@ -174,27 +206,34 @@ export default function HomePage() {
       return;
     }
     const value = Math.trunc(n);
+    writeInFlightRef.current = true;
+    setWritePending(true);
     setStatus("Signing and submitting…");
     appendLog("info", `set(${value}): awaiting signature in Freighter…`);
     try {
       const sent = await writeStoredU32(value, pk);
       appendLog(
         "ok",
-        `set(${value}) submitted. Result: ${String(sent.result)}`,
+        `set(${value}) submitted. Result: ${sent.result === null || sent.result === undefined ? "(none — set has no return value)" : String(sent.result)}`,
       );
       await refresh();
       setStatus(
-        `Submitted. Result: ${String(sent.result)}. Stored values above were refreshed.`,
+        "Submitted. Stored values above were refreshed. (set() returns nothing on chain, so Result is empty.)",
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus(msg);
       appendLog("error", `set(${value}) failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
     }
   }
 
   async function onSubmitSigned(e: FormEvent) {
     e.preventDefault();
+    if (writeInFlightRef.current) return;
     const pk = await requireWallet();
     if (!pk) return;
     const n = Number(signedInput);
@@ -203,6 +242,8 @@ export default function HomePage() {
       return;
     }
     const v = Math.trunc(n);
+    writeInFlightRef.current = true;
+    setWritePending(true);
     setStatus("Signing set_signed…");
     appendLog("info", `set_signed(${v}): awaiting Freighter…`);
     try {
@@ -214,13 +255,20 @@ export default function HomePage() {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus(msg);
       appendLog("error", `set_signed failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
     }
   }
 
   async function onSubmitTag(e: FormEvent) {
     e.preventDefault();
+    if (writeInFlightRef.current) return;
     const pk = await requireWallet();
     if (!pk) return;
+    writeInFlightRef.current = true;
+    setWritePending(true);
     setStatus("Signing set_tag…");
     appendLog("info", `set_tag(${JSON.stringify(tagInput)}): awaiting Freighter…`);
     try {
@@ -232,11 +280,16 @@ export default function HomePage() {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus(msg);
       appendLog("error", `set_tag failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
     }
   }
 
   async function onSubmitCounter(e: FormEvent) {
     e.preventDefault();
+    if (writeInFlightRef.current) return;
     const pk = await requireWallet();
     if (!pk) return;
     let n: bigint;
@@ -246,6 +299,8 @@ export default function HomePage() {
       appendLog("warn", "Enter a whole number for set_counter (u64).");
       return;
     }
+    writeInFlightRef.current = true;
+    setWritePending(true);
     setStatus("Signing set_counter…");
     appendLog("info", `set_counter(${n}): awaiting Freighter…`);
     try {
@@ -257,6 +312,10 @@ export default function HomePage() {
       const msg = err instanceof Error ? err.message : String(err);
       setStatus(msg);
       appendLog("error", `set_counter failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
     }
   }
 
@@ -304,7 +363,13 @@ export default function HomePage() {
           ).
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-slate-700">Contract</span>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+            <FileCode
+              className="h-4 w-4 shrink-0 text-violet-600"
+              aria-hidden
+            />
+            Contract
+          </span>
           {explorerUrl ? (
             <a
               href={explorerUrl}
@@ -394,6 +459,7 @@ export default function HomePage() {
           <button
             type="button"
             className={btnPrimary}
+            disabled={writePending}
             onClick={() => {
               setWriteInput(DEMO_WRITE_VALUES.u32);
               setSignedInput(DEMO_WRITE_VALUES.i32);
@@ -410,6 +476,10 @@ export default function HomePage() {
             Fill demo values
           </button>
         </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Submit one write at a time and approve once in Freighter. A second submit while another is in flight often causes{" "}
+          <code className="rounded bg-slate-100 px-1">txBadSeq</code>.
+        </p>
         <div className="mt-6 space-y-5">
           <form
             onSubmit={(ev) => void onSubmitSet(ev)}
@@ -422,9 +492,10 @@ export default function HomePage() {
                 value={writeInput}
                 onChange={(ev) => setWriteInput(ev.target.value)}
                 inputMode="numeric"
+                disabled={writePending}
               />
             </label>
-            <button type="submit" className={btnAccent}>
+            <button type="submit" disabled={writePending} className={btnAccent}>
               <Hash className="h-4 w-4" aria-hidden />
               set() — ValueSet
             </button>
@@ -440,12 +511,12 @@ export default function HomePage() {
                 value={signedInput}
                 onChange={(ev) => setSignedInput(ev.target.value)}
                 inputMode="numeric"
-                disabled={hasExtendedApi !== true}
+                disabled={hasExtendedApi !== true || writePending}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true}
+              disabled={hasExtendedApi !== true || writePending}
               className={btnAccent}
             >
               <Binary className="h-4 w-4" aria-hidden />
@@ -463,12 +534,12 @@ export default function HomePage() {
                 value={tagInput}
                 onChange={(ev) => setTagInput(ev.target.value)}
                 maxLength={200}
-                disabled={hasExtendedApi !== true}
+                disabled={hasExtendedApi !== true || writePending}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true}
+              disabled={hasExtendedApi !== true || writePending}
               className={btnAccent}
             >
               <Tag className="h-4 w-4" aria-hidden />
@@ -486,12 +557,12 @@ export default function HomePage() {
                 value={counterInput}
                 onChange={(ev) => setCounterInput(ev.target.value)}
                 inputMode="numeric"
-                disabled={hasExtendedApi !== true}
+                disabled={hasExtendedApi !== true || writePending}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true}
+              disabled={hasExtendedApi !== true || writePending}
               className={btnAccent}
             >
               <ScrollText className="h-4 w-4" aria-hidden />
@@ -516,14 +587,26 @@ export default function HomePage() {
             <ScrollText className="h-4 w-4 text-violet-300" aria-hidden />
             Transaction log
           </h2>
-          <button
-            type="button"
-            onClick={() => setTxLog([])}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-slate-700"
-          >
-            <Trash2 className="h-3.5 w-3.5" aria-hidden />
-            Clear log
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void copyLogToClipboard()}
+              disabled={txLog.length === 0}
+              title={txLog.length === 0 ? "Log is empty" : "Copy all lines to clipboard"}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-slate-700 disabled:pointer-events-none disabled:opacity-40"
+            >
+              <ClipboardCopy className="h-3.5 w-3.5" aria-hidden />
+              Copy log
+            </button>
+            <button
+              type="button"
+              onClick={() => setTxLog([])}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-600 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-slate-700"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+              Clear log
+            </button>
+          </div>
         </div>
         <div
           ref={logPanelRef}

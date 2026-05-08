@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Film } from "lucide-react";
+import { Download, Film } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Demo | Soroban Fullstack POC",
@@ -45,6 +45,24 @@ export default function DemoPage() {
           </code>
           .
         </video>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <a
+          href={DEMO_VIDEO_SRC}
+          download="soroban-poc-demo-recording.mp4"
+          className="inline-flex items-center gap-2 rounded-full border-2 border-violet-300 bg-white px-4 py-2 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-400 hover:bg-violet-50 hover:shadow-md"
+        >
+          <Download className="h-4 w-4 shrink-0" aria-hidden />
+          Download MP4
+        </a>
+        <a
+          href="/demo/recording.webm"
+          download="soroban-poc-demo-recording.webm"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50/80 hover:text-violet-900"
+        >
+          <Download className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+          Download WebM
+        </a>
       </div>
     </div>
   );
