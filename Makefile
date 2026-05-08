@@ -8,7 +8,7 @@ REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 CONTRACT_DIR := $(REPO_ROOT)/contracts/basic-storage
 FRONTEND_DIR := $(REPO_ROOT)/frontend
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check contract-test contract-integration contract-coverage contract-fuzz-smoke clippy build-contract build-frontend check ci clean clean-frontend stellar-identity deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -27,8 +27,26 @@ fmt: ## Format Rust sources in contracts/basic-storage
 fmt-check: ## Check Rust formatting without modifying files
 	cd $(CONTRACT_DIR) && cargo fmt -- --check
 
-contract-test: ## Run cargo test in contracts/basic-storage
+contract-test: ## Run cargo test in contracts/basic-storage (unit + integration + proptest)
 	cd $(CONTRACT_DIR) && cargo test
+
+contract-integration: ## Run only integration tests (tests/*.rs)
+	cd $(CONTRACT_DIR) && cargo test --test integration_contract
+
+contract-coverage: ## HTML coverage for contract tests (install: cargo install cargo-llvm-cov)
+	@if ! cargo llvm-cov --version >/dev/null 2>&1; then \
+		echo "error: cargo-llvm-cov not installed. Run: cargo install cargo-llvm-cov" >&2; \
+		exit 1; \
+	fi
+	cd "$(CONTRACT_DIR)" && cargo llvm-cov test --html --output-dir target/llvm-cov-html
+	@echo "Open $(CONTRACT_DIR)/target/llvm-cov-html/index.html"
+
+contract-fuzz-smoke: ## Short libFuzzer run (install: cargo install cargo-fuzz)
+	@if ! command -v cargo-fuzz >/dev/null 2>&1; then \
+		echo "error: cargo-fuzz not installed. Run: cargo install cargo-fuzz" >&2; \
+		exit 1; \
+	fi
+	cd "$(CONTRACT_DIR)/fuzz" && cargo fuzz run storage_set_get -- -runs=1000
 
 clippy: ## Run cargo clippy with warnings denied
 	cd $(CONTRACT_DIR) && cargo clippy --all-targets -- -D warnings
@@ -48,7 +66,7 @@ build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is 
 
 check: fmt-check clippy contract-test build-contract build-frontend ## Verify contract + frontend (auto npm ci when React tree is broken)
 
-ci: install-rust-target install-frontend fmt-check clippy contract-test build-contract build-frontend ## Bootstrap then run full verification (Rust target, npm, fmt, clippy, tests, wasm, Next build)
+ci: install-rust-target install-frontend fmt-check clippy contract-test build-contract build-frontend ## Bootstrap then full verification (Rust target, npm, fmt, clippy, tests, wasm, Next build)
 
 clean: ## Remove contract target/ and Next.js .next/, out/, dist/
 	rm -rf $(CONTRACT_DIR)/target $(FRONTEND_DIR)/.next $(FRONTEND_DIR)/out $(FRONTEND_DIR)/dist
