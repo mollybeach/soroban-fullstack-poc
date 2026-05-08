@@ -30,6 +30,17 @@ export function getConfiguredContractId(): string {
   return id;
 }
 
+/** Returns contract id from env when set; otherwise null (for optional UI like explorer links). */
+export function getOptionalContractId(): string | null {
+  const id = process.env.NEXT_PUBLIC_CONTRACT_ID?.trim();
+  return id || null;
+}
+
+/** Stellar Expert (testnet) page for a contract. */
+export function stellarExpertContractUrl(contractId: string): string {
+  return `https://stellar.expert/explorer/testnet/contract/${contractId}`;
+}
+
 function baseClientOptions() {
   return {
     contractId: getConfiguredContractId(),
