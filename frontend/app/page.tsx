@@ -12,6 +12,7 @@ import {
 import {
   Binary,
   ClipboardCopy,
+  Download,
   ExternalLink,
   FileCode,
   Hash,
@@ -984,16 +985,16 @@ export default function HomePage() {
     return n;
   }, [hasExtendedApi, hasWideTypesApi, hasFullTypesApi]);
 
-  const logColor = (level: LogLevel) => {
+  const logMessageColor = (level: LogLevel) => {
     switch (level) {
       case "ok":
-        return "text-emerald-800";
+        return "text-[#39ff14] drop-shadow-[0_0_12px_rgba(57,255,20,0.55)]";
       case "warn":
-        return "text-amber-800";
+        return "text-amber-300 drop-shadow-[0_0_8px_rgba(252,211,77,0.45)]";
       case "error":
-        return "text-rose-700";
+        return "text-fuchsia-400 drop-shadow-[0_0_10px_rgba(232,121,249,0.5)]";
       default:
-        return "text-slate-700";
+        return "text-sky-300 drop-shadow-[0_0_6px_rgba(125,211,252,0.4)]";
     }
   };
 
@@ -1183,9 +1184,10 @@ export default function HomePage() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
-                    <span className="text-[1.35rem] leading-none" aria-hidden>
-                      📦
-                    </span>
+                    <Download
+                      className="h-5 w-5 shrink-0 text-violet-600"
+                      aria-hidden
+                    />
                     Get stored values (testnet)
                   </h2>
                   {schemaSlotCount != null ? (
@@ -1736,13 +1738,14 @@ export default function HomePage() {
           aria-label="Transaction log"
         >
           {txLog.length === 0 ? (
-            <p className="text-slate-500">
+            <p className="text-slate-400">
               Read and write actions append entries here with timestamps.
             </p>
           ) : (
             txLog.map((line) => (
-              <p key={line.id} className={logColor(line.level)}>
-                [{line.ts}] {line.message}
+              <p key={line.id} className="mb-1.5 last:mb-0">
+                <span className="tabular-nums text-slate-500">[{line.ts}]</span>{" "}
+                <span className={logMessageColor(line.level)}>{line.message}</span>
               </p>
             ))
           )}

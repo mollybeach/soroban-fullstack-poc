@@ -6,6 +6,8 @@ import {
   Bug,
   CheckCircle2,
   Clock,
+  ExternalLink,
+  FileCode,
   FlaskConical,
   Layers,
   PieChart,
@@ -15,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { formatUnknownError } from "@/lib/format-unknown-error";
+import { stellarExpertContractUrl } from "@/lib/stellar";
 
 type TestCaseRow = {
   id: string;
@@ -348,20 +351,31 @@ export default function TestsPage() {
                   ? process.env.NEXT_PUBLIC_CONTRACT_ID.trim()
                   : "");
               if (!cid) return null;
-              const expert = `https://stellar.expert/explorer/testnet/contract/${cid}`;
               return (
-                <div className="mt-4 max-w-2xl rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100">
-                  <p className="font-semibold text-slate-900">Demo testnet contract (from export)</p>
-                  <p className="mt-1 break-all font-mono text-xs text-slate-800 sm:text-sm">{cid}</p>
-                  <p className="mt-2">
+                <div className="mt-4 max-w-2xl rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 ring-1 ring-slate-100">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-2 text-base font-semibold text-slate-700 sm:text-lg">
+                      <FileCode
+                        className="h-5 w-5 shrink-0 text-violet-600 sm:h-6 sm:w-6"
+                        aria-hidden
+                      />
+                      Contract
+                    </span>
                     <a
-                      href={expert}
+                      href={stellarExpertContractUrl(cid)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+                      className="group inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50/80 px-3 py-1.5 font-mono text-xs text-violet-900 transition hover:border-violet-300 hover:bg-violet-100"
                     >
-                      Open on Stellar Expert (testnet)
+                      <span className="truncate">{cid}</span>
+                      <ExternalLink
+                        className="h-3.5 w-3.5 shrink-0 text-violet-600 group-hover:text-violet-800"
+                        aria-hidden
+                      />
                     </a>
+                  </div>
+                  <p className="mt-1.5 text-xs leading-snug text-slate-500">
+                    Demo testnet id from export snapshot.
                   </p>
                   {d.testScopeNote ? (
                     <p className="mt-2 border-t border-slate-200/80 pt-2 text-xs leading-relaxed text-slate-600">
