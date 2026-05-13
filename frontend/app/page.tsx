@@ -321,20 +321,182 @@ function ReadGetSlotPulseWrap({
   );
 }
 
-/** Matches `contracts/basic-storage/src/test.rs` round-trip examples. */
-const DEMO_WRITE_VALUES = {
-  u32: "42",
-  i32: "-17",
-  tag: "hello-events",
-  u64: "99",
-  flag: "true",
-  i64: "-1000000000000",
-  blob: "hello-blob",
-  u128: "12345678901234567890",
-  symbol: "POC",
-  pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-  i128Wide: "-9876543210000000000000000000",
-} as const;
+/** Rotating demo fills for Writes; index persisted in localStorage between visits. */
+const DEMO_PRESET_STORAGE_KEY = "soroban-poc-demo-preset-index";
+
+type DemoWritePreset = {
+  name: string;
+  u32: string;
+  i32: string;
+  tag: string;
+  u64: string;
+  flag: string;
+  i64: string;
+  blob: string;
+  u128: string;
+  symbol: string;
+  pointer: string;
+  i128Wide: string;
+};
+
+const DEMO_WRITE_PRESETS: DemoWritePreset[] = [
+  {
+    name: "test.rs",
+    u32: "42",
+    i32: "-17",
+    tag: "hello-events",
+    u64: "99",
+    flag: "true",
+    i64: "-1000000000000",
+    blob: "hello-blob",
+    u128: "12345678901234567890",
+    symbol: "POC",
+    pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    i128Wide: "-9876543210000000000000000000",
+  },
+  {
+    name: "Zeroed",
+    u32: "0",
+    i32: "0",
+    tag: "nil-tag",
+    u64: "0",
+    flag: "false",
+    i64: "0",
+    blob: "",
+    u128: "0",
+    symbol: "_",
+    pointer: "",
+    i128Wide: "0",
+  },
+  {
+    name: "Orbit",
+    u32: "314159",
+    i32: "-271828",
+    tag: "orbit-telemetry",
+    u64: "86400",
+    flag: "true",
+    i64: "-299792458",
+    blob: "perigee",
+    u128: "999999999999999999",
+    symbol: "ORBIT",
+    pointer: "",
+    i128Wide: "170141183460469231731687303715884105727",
+  },
+  {
+    name: "Quorum",
+    u32: "7",
+    i32: "42",
+    tag: "vote-closed",
+    u64: "12",
+    flag: "false",
+    i64: "1000000",
+    blob: "ballot",
+    u128: "340282366920938463463374607431768211455",
+    symbol: "VOTE",
+    pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    i128Wide: "-170141183460469231731687303715884105728",
+  },
+  {
+    name: "Neon",
+    u32: "8080",
+    i32: "-404",
+    tag: "rpc-burst",
+    u64: "65535",
+    flag: "true",
+    i64: "-2147483648",
+    blob: "neon-pulse",
+    u128: "18446744073709551615",
+    symbol: "NEON",
+    pointer: "",
+    i128Wide: "1",
+  },
+  {
+    name: "Ledger",
+    u32: "1",
+    i32: "1",
+    tag: "seq-gap-check",
+    u64: "1",
+    flag: "true",
+    i64: "1",
+    blob: "ledger",
+    u128: "1",
+    symbol: "LED",
+    pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    i128Wide: "-1",
+  },
+  {
+    name: "Depth",
+    u32: "3",
+    i32: "-9000",
+    tag: "deep-negative",
+    u64: "999",
+    flag: "false",
+    i64: "-9223372036854775808",
+    blob: "mariana",
+    u128: "340282366920938463463374607431768211455",
+    symbol: "DEPTH",
+    pointer: "",
+    i128Wide: "-170141183460469231731687303715884105728",
+  },
+  {
+    name: "Soroban",
+    u32: "2023",
+    i32: "-2015",
+    tag: "soroban-lab",
+    u64: "2014",
+    flag: "true",
+    i64: "2014",
+    blob: "stellar-vm",
+    u128: "201420152023",
+    symbol: "XLM",
+    pointer: "",
+    i128Wide: "-20152023",
+  },
+  {
+    name: "Payload",
+    u32: "255",
+    i32: "-128",
+    tag: "frame-255",
+    u64: "256",
+    flag: "false",
+    i64: "127",
+    blob: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    u128: "256256256256256256",
+    symbol: "FRAME",
+    pointer: "",
+    i128Wide: "-256256256256256256",
+  },
+  {
+    name: "Caps",
+    u32: "4294967290",
+    i32: "2147483647",
+    tag: "max-edge-smoke",
+    u64: "18446744073709551614",
+    flag: "true",
+    i64: "9223372036854775807",
+    blob: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    u128: "99999999999999999999999999999999999999",
+    symbol: "CAPS",
+    pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    i128Wide: "9223372036854775807",
+  },
+];
+
+const DEMO_PRESET_COUNT = DEMO_WRITE_PRESETS.length;
+
+function readDemoPresetIndex(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = window.localStorage.getItem(DEMO_PRESET_STORAGE_KEY);
+  const n = Number.parseInt(raw ?? "0", 10);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n % DEMO_PRESET_COUNT;
+}
+
+function writeDemoPresetIndex(next: number) {
+  const normalized =
+    ((next % DEMO_PRESET_COUNT) + DEMO_PRESET_COUNT) % DEMO_PRESET_COUNT;
+  window.localStorage.setItem(DEMO_PRESET_STORAGE_KEY, String(normalized));
+}
 
 export default function HomePage() {
   const {
@@ -393,6 +555,8 @@ export default function HomePage() {
   const logIdRef = useRef(0);
   const logPanelRef = useRef<HTMLDivElement>(null);
   const loggedPkRef = useRef<string | null>(null);
+  /** Next demo preset index (from localStorage); synced on mount and after each fill. */
+  const [nextDemoPresetIndex, setNextDemoPresetIndex] = useState(0);
 
   const appendLog = useCallback((level: LogLevel, message: string) => {
     const id = ++logIdRef.current;
@@ -409,6 +573,10 @@ export default function HomePage() {
 
   const bumpReadSlotPulse = useCallback((slot: ReadSlotKey) => {
     setReadSlotPulseGen((prev) => ({ ...prev, [slot]: prev[slot] + 1 }));
+  }, []);
+
+  useEffect(() => {
+    setNextDemoPresetIndex(readDemoPresetIndex());
   }, []);
 
   useEffect(() => {
@@ -1377,9 +1545,9 @@ export default function HomePage() {
 
       <section className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-violet-100 bg-white/90 shadow-md">
         <div className="shrink-0 border-b border-violet-100/80 px-4 pb-4 pt-4 sm:px-6 sm:pb-4 sm:pt-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1">
                 <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
                   <PencilLine className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
                   Writes (testnet)
@@ -1394,46 +1562,68 @@ export default function HomePage() {
                   </span>
                 )}
               </div>
-              <p className="text-[11px] leading-snug text-slate-500">
-                {walletReady ? (
-                  <>
-                    Same three-column slot order as Get stored values (read grid above). Submit one write at a time and
-                    approve once in your wallet; a second submit while another is in flight often causes{" "}
-                    <code className="rounded bg-slate-100 px-1 text-[10px] text-slate-800">txBadSeq</code>.
-                  </>
-                ) : (
-                  <>
-                    Connect your wallet above to enable writes. Until then, submit buttons stay disabled.
-                  </>
-                )}
-              </p>
-            </div>
             <button
               type="button"
-              className={`${btnPrimary} w-full shrink-0 sm:mt-0 sm:w-auto`}
+              title={`Ten demo value sets rotate in order (saved in this browser). This click fills preset “${DEMO_WRITE_PRESETS[nextDemoPresetIndex]?.name ?? "…"}” (${nextDemoPresetIndex + 1}/${DEMO_PRESET_COUNT}); the next click uses the following preset.`}
+              aria-label={`Fill all write inputs with demo preset ${nextDemoPresetIndex + 1} of ${DEMO_PRESET_COUNT}, ${DEMO_WRITE_PRESETS[nextDemoPresetIndex]?.name ?? "unknown"}. Each click advances to the next preset.`}
+              className={`${btnPrimary} flex w-full flex-col items-stretch gap-0.5 py-2.5 sm:mt-0 sm:w-auto sm:py-2`}
               disabled={writePending}
               onClick={() => {
-              setWriteInput(DEMO_WRITE_VALUES.u32);
-              setSignedInput(DEMO_WRITE_VALUES.i32);
-              setTagInput(DEMO_WRITE_VALUES.tag);
-              setCounterInput(DEMO_WRITE_VALUES.u64);
-              setFlagInput(DEMO_WRITE_VALUES.flag);
-              setI64Input(DEMO_WRITE_VALUES.i64);
-              setBlobInput(DEMO_WRITE_VALUES.blob);
-              setU128Input(DEMO_WRITE_VALUES.u128);
-              setSymbolInput(DEMO_WRITE_VALUES.symbol);
-              setPointerInput(DEMO_WRITE_VALUES.pointer);
-              setI128WideInput(DEMO_WRITE_VALUES.i128Wide);
-              setStatus(null);
-              appendLog(
-                "info",
-                `Filled demo inputs: u32=${DEMO_WRITE_VALUES.u32}, i32=${DEMO_WRITE_VALUES.i32}, tag=${JSON.stringify(DEMO_WRITE_VALUES.tag)}, u64=${DEMO_WRITE_VALUES.u64}, flag=${DEMO_WRITE_VALUES.flag}, i64=${DEMO_WRITE_VALUES.i64}, blob=${JSON.stringify(DEMO_WRITE_VALUES.blob)}, u128=${DEMO_WRITE_VALUES.u128}, symbol=${DEMO_WRITE_VALUES.symbol}, pointer=${DEMO_WRITE_VALUES.pointer}, i128Wide=${DEMO_WRITE_VALUES.i128Wide}`,
-              );
-            }}
-          >
-            <Sparkles className="h-4 w-4" aria-hidden />
-            Fill demo values
-          </button>
+                const i = readDemoPresetIndex();
+                const p = DEMO_WRITE_PRESETS[i]!;
+                setWriteInput(p.u32);
+                setSignedInput(p.i32);
+                setTagInput(p.tag);
+                setCounterInput(p.u64);
+                setFlagInput(p.flag);
+                setI64Input(p.i64);
+                setBlobInput(p.blob);
+                setU128Input(p.u128);
+                setSymbolInput(p.symbol);
+                setPointerInput(p.pointer);
+                setI128WideInput(p.i128Wide);
+                const next = (i + 1) % DEMO_PRESET_COUNT;
+                writeDemoPresetIndex(next);
+                setNextDemoPresetIndex(next);
+                setStatus(null);
+                appendLog(
+                  "info",
+                  `Demo preset ${i + 1}/${DEMO_PRESET_COUNT} “${p.name}” → all write inputs.`,
+                );
+              }}
+            >
+              <span className="inline-flex items-center justify-center gap-2">
+                <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+                Fill demo values
+                <span className="rounded-full border border-violet-200/90 bg-violet-100/80 px-2 py-px text-[10px] font-semibold uppercase tracking-wide text-violet-900">
+                  {DEMO_PRESET_COUNT} presets
+                </span>
+              </span>
+              <span className="inline-flex items-center justify-center gap-1.5 text-center text-[10px] font-medium leading-tight text-violet-900/90 sm:justify-end">
+                <RefreshCw className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                <span>
+                  Click again for new values — next:{" "}
+                  <span className="font-semibold text-violet-950">
+                    “{DEMO_WRITE_PRESETS[nextDemoPresetIndex]?.name ?? "…"}”
+                  </span>{" "}
+                  ({nextDemoPresetIndex + 1}/{DEMO_PRESET_COUNT})
+                </span>
+              </span>
+            </button>
+          </div>
+            <p className="w-full min-w-0 text-[11px] leading-relaxed text-slate-500">
+              {walletReady ? (
+                <>
+                  Same three-column slot order as Get stored values (read grid above). Submit one write at a time and
+                  approve once in your wallet; a second submit while another is in flight often causes{" "}
+                  <code className="rounded bg-slate-100 px-1 text-[10px] text-slate-800">txBadSeq</code>.
+                </>
+              ) : (
+                <>
+                  Connect your wallet above to enable writes. Until then, submit buttons stay disabled.
+                </>
+              )}
+            </p>
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-1 md:px-4 md:pb-4 md:pt-2">

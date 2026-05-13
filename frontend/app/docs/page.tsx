@@ -330,12 +330,14 @@ export default function DocsPage() {
           testnet account, so it needs a small XLM balance for fees.
         </p>
         <p>
-          <strong>Fill demo values</strong> only fills the input boxes with the same numbers/strings
-          used in <code className="rounded bg-slate-100 px-1">contracts/basic-storage/src/test.rs</code>{" "}
-          (for example <code className="rounded bg-slate-100 px-1">42</code>,{" "}
-          <code className="rounded bg-slate-100 px-1">-17</code>, <code className="rounded bg-slate-100 px-1">hello-events</code>,{" "}
-          <code className="rounded bg-slate-100 px-1">99</code>). It does <strong>not</strong> send
-          transactions—you still press each <strong>set…</strong> button and approve in Freighter.
+          <strong>Fill demo values</strong> fills every write input from a rotating set of{" "}
+          <strong>10 named presets</strong> (the first matches{" "}
+          <code className="rounded bg-slate-100 px-1">contracts/basic-storage/src/test.rs</code>).
+          Each click applies the <strong>next</strong> preset in order (the button shows which is next); your browser
+          remembers the position in{" "}
+          <code className="rounded bg-slate-100 px-1">localStorage</code> so the sequence continues across reloads. It
+          does <strong>not</strong> send transactions—you still press each <strong>set…</strong> button and approve in
+          your wallet.
         </p>
         <p>
           The note about <code className="rounded bg-slate-100 px-1">txBadSeq</code> means Stellar

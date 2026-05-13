@@ -51,6 +51,10 @@ export async function ensureStellarWalletsKit(): Promise<void> {
             icons: [`${origin}/favicon.ico`],
           },
           allowedChains: [WalletConnectTargetChain.TESTNET],
+          /** Quiets WalletConnect / Reown restore noise in the browser devtools console. */
+          signClientOptions: {
+            logger: "silent",
+          } as Record<string, unknown>,
         }),
       );
     }
