@@ -14,7 +14,6 @@ import {
   FileCode,
   Hash,
   PencilLine,
-  QrCode,
   RefreshCw,
   ScrollText,
   Sparkles,
@@ -33,6 +32,7 @@ import {
   stellarExpertContractUrl,
 } from "@/lib/stellar";
 import { useWallet } from "@/contexts/wallet-context";
+import { formatUnknownError } from "@/lib/format-unknown-error";
 
 type LogLevel = "info" | "warn" | "ok" | "error";
 
@@ -64,11 +64,10 @@ export default function HomePage() {
   const {
     publicKey,
     signTransaction,
-    connectFreighter,
-    connectWalletConnect,
+    connectWallet,
     walletConnectConfigured,
   } = useWallet();
-  const [walletConnectError, setWalletConnectError] = useState<string | null>(
+  const [connectWalletError, setConnectWalletError] = useState<string | null>(
     null,
   );
   const [stored, setStored] = useState<number | null>(null);
@@ -117,7 +116,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (publicKey) {
-      setWalletConnectError(null);
+      setConnectWalletError(null);
     }
   }, [publicKey]);
 
@@ -155,7 +154,7 @@ export default function HomePage() {
       setStoredTag(null);
       setStoredCounter(null);
       setHasExtendedApi(null);
-      const msg = e instanceof Error ? e.message : String(e);
+      const msg = formatUnknownError(e);
       setStatus(msg);
       appendLog("error", `read failed: ${msg}`);
     } finally {
@@ -188,31 +187,22 @@ export default function HomePage() {
     return { publicKey, signTransaction };
   }
 
-  async function onConnectFreighterFromPage() {
-    setWalletConnectError(null);
+  async function onConnectWalletFromPage() {
+    setConnectWalletError(null);
     try {
-      await connectFreighter();
+      await connectWallet();
     } catch (e) {
-      setWalletConnectError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function onConnectWalletConnectFromPage() {
-    setWalletConnectError(null);
-    try {
-      await connectWalletConnect();
-    } catch (e) {
-      setWalletConnectError(e instanceof Error ? e.message : String(e));
+      setConnectWalletError(formatUnknownError(e));
     }
   }
 
   const appendBadSeqHintIfNeeded = useCallback(
     (err: unknown) => {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       if (/txBadSeq|"name":\s*"txBadSeq"/i.test(msg) || /bad\s*seq/i.test(msg)) {
         appendLog(
           "info",
-          "txBadSeq: your account’s sequence moved (often from double-clicking submit or another tab/app sending a tx). Wait until the previous transaction confirms, then submit once—do not start a second submit while Freighter is still open.",
+          "txBadSeq: your account’s sequence moved (often from double-clicking submit or another tab/app sending a tx). Wait until the previous transaction confirms, then submit once—do not start a second submit while the wallet approval is still open.",
         );
       }
     },
@@ -227,7 +217,7 @@ export default function HomePage() {
       await navigator.clipboard.writeText(text);
       appendLog("info", "Log copied to clipboard.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       appendLog("error", `Copy failed: ${msg}`);
     }
   }, [txLog, appendLog]);
@@ -261,7 +251,7 @@ export default function HomePage() {
         "Submitted. Stored values above were refreshed. (set() returns nothing on chain, so Result is empty.)",
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set(${value}) failed: ${msg}`);
       appendBadSeqHintIfNeeded(err);
@@ -293,7 +283,7 @@ export default function HomePage() {
       await refresh();
       setStatus("set_signed submitted.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_signed failed: ${msg}`);
       appendBadSeqHintIfNeeded(err);
@@ -319,7 +309,7 @@ export default function HomePage() {
       await refresh();
       setStatus("set_tag submitted.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_tag failed: ${msg}`);
       appendBadSeqHintIfNeeded(err);
@@ -352,7 +342,7 @@ export default function HomePage() {
       await refresh();
       setStatus("set_counter submitted.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_counter failed: ${msg}`);
       appendBadSeqHintIfNeeded(err);
@@ -400,13 +390,15 @@ export default function HomePage() {
         </h1>
         <p className="mt-3 text-slate-600 leading-relaxed">
           Minimal testnet flow: simulate <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm text-violet-900">get*</code>, then{" "}
-          <strong>connect your wallet</strong> — <strong>Freighter</strong> (browser) or{" "}
-          <strong>WalletConnect</strong> (e.g. mobile) on Stellar testnet — to sign writes. Each write emits a contract event (
+          <strong>connect your wallet</strong> using{" "}
+          <strong>Stellar Wallets Kit</strong> (Freighter, xBull, Albedo, LOBSTR, and more on testnet).
+          Add <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm text-violet-900">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>{" "}
+          to also enable WalletConnect inside the same picker. Each write emits a contract event (
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">ValueSet</code>,{" "}
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">SignedSet</code>,{" "}
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">TagSet</code>,{" "}
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">CounterSet</code>
-          ).
+          ). Reads below still work without a wallet (RPC simulation only).
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700">
@@ -447,42 +439,31 @@ export default function HomePage() {
                 Connect wallet
               </h2>
               <p className="max-w-xl text-sm text-slate-700 leading-relaxed">
-                Writes are signed Soroban transactions. Use{" "}
-                <strong>Freighter</strong> in the browser, or <strong>WalletConnect</strong> for a QR
-                session (Freighter mobile and other Stellar wallets that support{" "}
-                <code className="rounded bg-violet-100 px-1 text-xs">stellar:testnet</code> +{" "}
-                <code className="rounded bg-violet-100 px-1 text-xs">stellar_signXDR</code>
-                ). Set <code className="rounded bg-violet-100 px-1 text-xs">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>{" "}
-                for WalletConnect. Reads below still work without a wallet (RPC simulation only).
+                Opens the Stellar Wallets Kit modal: browser extensions when installed, plus
+                WalletConnect when{" "}
+                <code className="rounded bg-violet-100 px-1 text-xs">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>{" "}
+                is set. Network is Stellar testnet. Reads below still work without a wallet (RPC simulation only).
               </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:items-end">
               <button
                 type="button"
-                onClick={() => void onConnectFreighterFromPage()}
+                onClick={() => void onConnectWalletFromPage()}
                 className={btnAccent}
               >
                 <Wallet className="h-4 w-4 shrink-0" aria-hidden />
-                Freighter
+                Connect wallet
               </button>
-              <button
-                type="button"
-                onClick={() => void onConnectWalletConnectFromPage()}
-                disabled={!walletConnectConfigured}
-                title={
-                  walletConnectConfigured
-                    ? "Open WalletConnect (Reown AppKit)"
-                    : "Add NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID to .env.local"
-                }
-                className={`${btnPrimary} disabled:pointer-events-none disabled:opacity-45`}
-              >
-                <QrCode className="h-4 w-4 shrink-0" aria-hidden />
-                WalletConnect
-              </button>
+              {!walletConnectConfigured ? (
+                <p className="max-w-xs text-right text-xs text-slate-500">
+                  Optional: set project id in <code className="rounded bg-slate-100 px-1">.env.local</code> to
+                  include WalletConnect in the kit list.
+                </p>
+              ) : null}
             </div>
           </div>
-          {walletConnectError ? (
-            <p className="mt-4 text-sm text-rose-700">{walletConnectError}</p>
+          {connectWalletError ? (
+            <p className="mt-4 text-sm text-rose-700">{connectWalletError}</p>
           ) : null}
         </div>
       ) : null}

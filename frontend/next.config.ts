@@ -3,9 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   transpilePackages: [
     "@stellar/stellar-sdk",
-    "@stellar/freighter-api",
-    "@walletconnect/universal-provider",
-    "@reown/appkit",
+    "@creit-tech/stellar-wallets-kit",
   ],
 };
 

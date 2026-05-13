@@ -14,8 +14,9 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    // Stellar Wallets Kit applies Swk theme CSS variables to <html> on the client; suppress mismatch vs SSR.
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>

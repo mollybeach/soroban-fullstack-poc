@@ -312,7 +312,7 @@ npm install
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`). For **WalletConnect** (Reown / mobile wallets), also set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [Reown Cloud](https://dashboard.reown.com/).
+Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`). For **WalletConnect** inside Stellar Wallets Kit, set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [Reown Cloud](https://dashboard.reown.com/) and add your dev origin (e.g. `http://localhost:3000`) to the project’s allowed domains.
 
 If `next build` fails with **`Cannot find module './cjs/react.production.js'`**, your `node_modules` tree is incomplete. From the repo root run **`make install-frontend`** or **`make build-frontend`** (the Makefile refreshes deps when that file is missing), or remove modules with **`make clean-frontend`** and install again.
 

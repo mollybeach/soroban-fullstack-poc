@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Documentation | Soroban Fullstack POC",
   description:
-    "How the Soroban testnet POC works: contract storage, events, reads, writes, Freighter, WalletConnect, testing, and the home page UI.",
+    "How the Soroban testnet POC works: contract storage, events, reads, writes, Stellar Wallets Kit (extensions + optional WalletConnect), testing, and the home page UI.",
 };
 
 function Section({
@@ -62,10 +62,18 @@ export default function DocsPage() {
           <strong>Stellar testnet</strong>: a small <strong>Soroban</strong> contract written in
           Rust, deployed with the <strong>Stellar CLI</strong>, and a <strong>Next.js</strong>{" "}
           frontend that <strong>reads</strong> contract state via Soroban RPC (simulation) and{" "}
-          <strong>writes</strong> with a pluggable signer: <strong>Freighter</strong> (browser extension)
-          or <strong>WalletConnect</strong> (Reown AppKit + <code className="rounded bg-slate-100 px-1">stellar:testnet</code> /{" "}
-          <code className="rounded bg-slate-100 px-1">stellar_signXDR</code> for mobile wallets).
-          The WalletConnect picker lists every Explorer wallet tagged with <code className="rounded bg-slate-100 px-1">stellar:testnet</code>, plus LOBSTR, Klever, OneKey, Bitget, Trezor Suite, Ledger Wallet, MetaMask, and Coinbase Wallet where they have WC listings. The session is still <strong>Stellar testnet only</strong>; Albedo, xBull, Hana, and Rabet are not on WC for that chain—use Freighter in the browser or a Stellar Wallets Kit integration for those.
+          <strong>writes</strong> with a pluggable signer from{" "}
+          <strong>Stellar Wallets Kit</strong> (<code className="rounded bg-slate-100 px-1">@creit-tech/stellar-wallets-kit</code>
+          ): one modal lists Freighter, xBull, Albedo, LOBSTR, and other supported wallets on{" "}
+          <strong>Stellar testnet</strong>. Set{" "}
+          <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code> from{" "}
+          <a
+            href="https://dashboard.reown.com/"
+            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+          >
+            Reown (WalletConnect Cloud)
+          </a>{" "}
+          to add WalletConnect inside the same kit flow (still <code className="rounded bg-slate-100 px-1">stellar:testnet</code>).
         </p>
         <p>
           The goal is the <strong>developer lifecycle</strong>—build, test, deploy, invoke from a
@@ -88,7 +96,7 @@ export default function DocsPage() {
             the Stellar SDK <strong>contract client</strong> pointed at your{" "}
             <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_CONTRACT_ID</code>, uses public{" "}
             <strong>Soroban testnet RPC</strong>, and accepts a <strong>signTransaction</strong> callback from{" "}
-            <code className="rounded bg-slate-100 px-1">WalletProvider</code> (Freighter or WalletConnect).
+            <code className="rounded bg-slate-100 px-1">WalletProvider</code> (Stellar Wallets Kit signer).
           </li>
           <li>
             <code className="rounded bg-slate-100 px-1">frontend/app/page.tsx</code> — Home UI:
@@ -111,7 +119,7 @@ export default function DocsPage() {
             >
               Reown (WalletConnect Cloud)
             </a>
-            . Enables the WalletConnect connect option; omit it to use Freighter only.
+            . Enables WalletConnect inside the kit; omit for extension-only wallets.
           </li>
         </ul>
       </Section>

@@ -14,6 +14,7 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
+import { formatUnknownError } from "@/lib/format-unknown-error";
 
 type TestCaseRow = {
   id: string;
@@ -222,7 +223,7 @@ export default function TestsPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          setLoadError(e instanceof Error ? e.message : String(e));
+          setLoadError(formatUnknownError(e));
           setData(FALLBACK);
         }
       }
@@ -251,7 +252,7 @@ export default function TestsPage() {
         }
       } catch (e) {
         if (!cancelled) {
-          setCovError(e instanceof Error ? e.message : String(e));
+          setCovError(formatUnknownError(e));
           setCov(null);
         }
       }

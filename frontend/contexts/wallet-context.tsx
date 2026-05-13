@@ -6,35 +6,31 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { isConnected, requestAccess } from "@stellar/freighter-api";
-import type { WalletConnectProviderInstance } from "@/lib/walletconnect-instance-type";
 import {
-  connectWalletConnectSession,
-  disconnectWalletConnect,
-  getWalletConnectClients,
+  createStellarWalletsKitSigner,
+  disconnectStellarWalletsKit,
+  ensureStellarWalletsKit,
   getWalletConnectProjectId,
-  parseStellarTestnetAccount,
-} from "@/lib/stellar-walletconnect";
-import {
-  createFreighterSigner,
-  createWalletConnectSigner,
-} from "@/lib/wallet-signers";
+  KitEventType,
+  openStellarWalletsKitAuth,
+  StellarWalletsKit,
+} from "@/lib/stellar-wallets-kit-client";
 import type { SorobanTransactionSigner } from "@/lib/wallet-types";
 
-export type WalletMode = "freighter" | "walletconnect";
+export type WalletMode = "stellar-wallets-kit";
 
 type WalletContextValue = {
   publicKey: string | null;
   walletMode: WalletMode | null;
   /** Present when connected; pass into Soroban write helpers in `lib/stellar.ts`. */
   signTransaction: SorobanTransactionSigner | null;
+  /** True when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set (WalletConnect appears in the kit list). */
   walletConnectConfigured: boolean;
-  connectFreighter: () => Promise<void>;
-  connectWalletConnect: () => Promise<void>;
+  /** Opens Stellar Wallets Kit (extensions + WalletConnect in one modal). */
+  connectWallet: () => Promise<void>;
   disconnect: () => Promise<void>;
 };
 
@@ -43,101 +39,62 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [walletMode, setWalletMode] = useState<WalletMode | null>(null);
-  const [wcProvider, setWcProvider] = useState<WalletConnectProviderInstance | null>(null);
-  const wcProviderRef = useRef<WalletConnectProviderInstance | null>(null);
-  wcProviderRef.current = wcProvider;
-  /** True after an explicit connect; blocks async WC session restore from overwriting the user. */
-  const userPickedWalletRef = useRef(false);
 
   const walletConnectConfigured = Boolean(getWalletConnectProjectId());
 
   const signTransaction = useMemo<SorobanTransactionSigner | null>(() => {
     if (!publicKey) return null;
-    if (walletMode === "freighter") {
-      return createFreighterSigner(publicKey);
-    }
-    if (walletMode === "walletconnect" && wcProvider) {
-      return createWalletConnectSigner(wcProvider, publicKey);
-    }
-    return null;
-  }, [publicKey, walletMode, wcProvider]);
+    return createStellarWalletsKitSigner(publicKey);
+  }, [publicKey]);
 
-  const connectFreighter = useCallback(async () => {
-    userPickedWalletRef.current = true;
-    const connected = await isConnected();
-    if (!connected.isConnected || connected.error) {
-      throw new Error(
-        connected.error?.message ??
-          "Wallet unavailable. Install the Freighter browser extension and allow this site.",
-      );
-    }
-    const access = await requestAccess();
-    if (access.error || !access.address) {
-      throw new Error(
-        access.error?.message ?? "Could not read wallet address",
-      );
-    }
-    await disconnectWalletConnect(wcProviderRef.current);
-    setWcProvider(null);
-    setPublicKey(access.address);
-    setWalletMode("freighter");
-  }, []);
-
-  const connectWalletConnect = useCallback(async () => {
-    userPickedWalletRef.current = true;
-    const { provider, publicKey: pk } = await connectWalletConnectSession();
-    setWcProvider(provider);
-    setPublicKey(pk);
-    setWalletMode("walletconnect");
+  const connectWallet = useCallback(async () => {
+    const { address } = await openStellarWalletsKitAuth();
+    setPublicKey(address);
+    setWalletMode("stellar-wallets-kit");
   }, []);
 
   const disconnect = useCallback(async () => {
-    userPickedWalletRef.current = false;
-    await disconnectWalletConnect(wcProviderRef.current);
-    setWcProvider(null);
+    await disconnectStellarWalletsKit();
     setPublicKey(null);
     setWalletMode(null);
   }, []);
 
-  /** Restore WalletConnect session after refresh (IndexedDB persistence). */
+  /** Restore address after refresh when the kit still has a session. */
   useEffect(() => {
-    if (typeof window === "undefined" || !walletConnectConfigured) return;
+    if (typeof window === "undefined") return;
+    let unState: (() => void) | undefined;
+    let unDisc: (() => void) | undefined;
     let cancelled = false;
-    void (async () => {
+
+    void ensureStellarWalletsKit().then(async () => {
+      if (cancelled) return;
       try {
-        const clients = await getWalletConnectClients();
-        if (!clients || cancelled) return;
-        const { provider } = clients;
-        const pk = parseStellarTestnetAccount(provider.session ?? null);
-        if (pk && !cancelled && !userPickedWalletRef.current) {
-          setWcProvider(provider);
-          setPublicKey(pk);
-          setWalletMode("walletconnect");
+        const { address } = await StellarWalletsKit.getAddress();
+        if (address && !cancelled) {
+          setPublicKey(address);
+          setWalletMode("stellar-wallets-kit");
         }
       } catch {
-        // ignore failed restore
+        // not connected yet
       }
-    })();
+      if (cancelled) return;
+      unState = StellarWalletsKit.on(KitEventType.STATE_UPDATED, (ev) => {
+        const a = ev.payload.address;
+        setPublicKey(a ?? null);
+        setWalletMode(a ? "stellar-wallets-kit" : null);
+      });
+      unDisc = StellarWalletsKit.on(KitEventType.DISCONNECT, () => {
+        setPublicKey(null);
+        setWalletMode(null);
+      });
+    });
+
     return () => {
       cancelled = true;
+      unState?.();
+      unDisc?.();
     };
-  }, [walletConnectConfigured]);
-
-  useEffect(() => {
-    const p = wcProvider;
-    if (!p) return;
-    const clear = () => {
-      setWcProvider(null);
-      setPublicKey(null);
-      setWalletMode(null);
-    };
-    p.on("session_delete", clear);
-    p.on("session_expire", clear);
-    return () => {
-      p.off("session_delete", clear);
-      p.off("session_expire", clear);
-    };
-  }, [wcProvider]);
+  }, []);
 
   const value = useMemo<WalletContextValue>(
     () => ({
@@ -145,8 +102,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletMode,
       signTransaction,
       walletConnectConfigured,
-      connectFreighter,
-      connectWalletConnect,
+      connectWallet,
       disconnect,
     }),
     [
@@ -154,8 +110,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       walletMode,
       signTransaction,
       walletConnectConfigured,
-      connectFreighter,
-      connectWalletConnect,
+      connectWallet,
       disconnect,
     ],
   );
