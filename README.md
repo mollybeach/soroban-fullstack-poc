@@ -122,6 +122,13 @@ The Soroban contract exposes small storage setters and getters for **indexer dem
 | `set_signed(i32)` / `get_signed()` | `SignedSet { v }` |
 | `set_tag(String)` / `get_tag()` | `TagSet { label }` |
 | `set_counter(u64)` / `get_counter()` | `CounterSet { n }` |
+| `set_flag(bool)` / `get_flag()` | `FlagSet { on }` |
+| `set_i64(i64)` / `get_i64()` | `I64Set { v }` |
+| `set_blob(Bytes)` / `get_blob()` | `BlobSet { len }` |
+| `set_u128(u128)` / `get_u128()` | `WideU128Set { v }` |
+| `set_symbol(String)` / `get_symbol()` | `CodeSet { len }` |
+| `set_pointer(Option<Address>)` / `get_pointer()` | `PointerSet { present }` |
+| `set_i128(i128)` / `get_i128()` | `WideI128Set { v }` |
 
 After changing the contract, **redeploy** wasm and set **`NEXT_PUBLIC_CONTRACT_ID`** again; older deployments will not expose the new entrypoints.
 

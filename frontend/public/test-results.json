@@ -1,9 +1,11 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-08T18:38:18.467Z",
+  "generatedAt": "2026-05-13T17:22:14.445Z",
   "success": true,
+  "pocContractId": "CD2JOGUPXH66ZGJXCDEU7XMWXQWAZUVF6H4WU26OUTAHSDLDMJHZZ7JT",
+  "testScopeNote": "These rows come from `cargo test` in `contracts/basic-storage` (isolated Soroban `Env` per case). They do not hit testnet RPC. `pocContractId` is the demo contract id captured from `frontend/.env.local` when this JSON was generated.",
   "summary": {
-    "passed": 16,
+    "passed": 33,
     "failed": 0,
     "ignored": 0
   },
@@ -59,7 +61,7 @@
       "path": "contracts/basic-storage/fuzz/fuzz_targets/storage_set_get.rs",
       "makeTarget": "make fuzz",
       "cli": "cd contracts/basic-storage/fuzz && cargo fuzz run storage_set_get -- -runs=1000",
-      "description": "Interprets random bytes as a little-endian `u32`, calls `set`/`get`, asserts equality. Exercises the same contract invariants under arbitrary bytes.",
+      "description": "Decodes `u32`, `i64`, `u128`, `bool`, and bounded `Bytes` from random input; asserts round-trips on independent slots (same WASM as the repo contract).",
       "note": "Not run by this script. Execute locally or in a job with `cargo-fuzz` and LLVM fuzzer deps installed."
     }
   ],
@@ -69,10 +71,10 @@
       "name": "Library tests",
       "path": "contracts/basic-storage/src/test.rs",
       "description": "Unit, property sweep, Proptest random cases, and several invariant checks (per-slot last-write and cross-slot isolation) in the library test module.",
-      "passed": 14,
+      "passed": 30,
       "failed": 0,
       "ok": true,
-      "tail": "test test::fuzz_set_get_random_u32 ... ok\n\ntest result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.13s",
+      "tail": "test test::fuzz_set_get_random_u32 ... ok\n\ntest result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.87s",
       "tests": [
         {
           "id": "lib:test::get_returns_zero_before_first_set",
@@ -84,6 +86,51 @@
           "detail": "Fresh contract: `get()` returns 0 before any `set` (default storage)."
         },
         {
+          "id": "lib:test::invariant_i128_last_write_visible",
+          "name": "test::invariant_i128_last_write_visible",
+          "shortName": "invariant_i128_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: random `i128` sequence; `get_i128` equals last write."
+        },
+        {
+          "id": "lib:test::invariant_blob_last_write_visible",
+          "name": "test::invariant_blob_last_write_visible",
+          "shortName": "invariant_blob_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: bounded random `Bytes` chunks; `get_blob` equals last write."
+        },
+        {
+          "id": "lib:test::invariant_pointer_optional_last_write_matches_sequence",
+          "name": "test::invariant_pointer_optional_last_write_matches_sequence",
+          "shortName": "invariant_pointer_optional_last_write_matches_sequence",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: alternating Some/None `set_pointer`; final `get_pointer` matches last op."
+        },
+        {
+          "id": "lib:test::invariant_flag_last_write_visible_on_get_flag",
+          "name": "test::invariant_flag_last_write_visible_on_get_flag",
+          "shortName": "invariant_flag_last_write_visible_on_get_flag",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: random bool sequence on `set_flag`; `get_flag` equals last write."
+        },
+        {
+          "id": "lib:test::invariant_i64_last_write_visible",
+          "name": "test::invariant_i64_last_write_visible",
+          "shortName": "invariant_i64_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: random `i64` sequence; `get_i64` equals last write."
+        },
+        {
           "id": "lib:test::sequential_sets_overwrite_previous_value",
           "name": "test::sequential_sets_overwrite_previous_value",
           "shortName": "sequential_sets_overwrite_previous_value",
@@ -93,13 +140,22 @@
           "detail": "Two writes in order; final `get` matches the last written value."
         },
         {
-          "id": "lib:test::set_max_u32_get_roundtrip",
-          "name": "test::set_max_u32_get_roundtrip",
-          "shortName": "set_max_u32_get_roundtrip",
+          "id": "lib:test::invariant_symbol_last_write_visible",
+          "name": "test::invariant_symbol_last_write_visible",
+          "shortName": "invariant_symbol_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: ASCII label sequence via `set_symbol`; `get_symbol` matches last `Symbol`."
+        },
+        {
+          "id": "lib:test::set_blob_get_roundtrip",
+          "name": "test::set_blob_get_roundtrip",
+          "shortName": "set_blob_get_roundtrip",
           "kind": "unit",
           "kindLabel": "Unit",
           "outcome": "passed",
-          "detail": "Boundary: stores and reads `u32::MAX` through the primary slot."
+          "detail": "`set_blob` / `get_blob` with short `Bytes` payload."
         },
         {
           "id": "lib:test::set_counter_get_roundtrip",
@@ -111,6 +167,60 @@
           "detail": "u64 counter path: `set_counter` / `get_counter`."
         },
         {
+          "id": "lib:test::set_flag_get_roundtrip",
+          "name": "test::set_flag_get_roundtrip",
+          "shortName": "set_flag_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_flag` / `get_flag` round-trip."
+        },
+        {
+          "id": "lib:test::set_i64_get_roundtrip",
+          "name": "test::set_i64_get_roundtrip",
+          "shortName": "set_i64_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_i64` / `get_i64` round-trip."
+        },
+        {
+          "id": "lib:test::property_set_get_roundtrip_for_many_values",
+          "name": "test::property_set_get_roundtrip_for_many_values",
+          "shortName": "property_set_get_roundtrip_for_many_values",
+          "kind": "property",
+          "kindLabel": "Property (sweep)",
+          "outcome": "passed",
+          "detail": "Deterministic sweep: for each value in 0..100, `set` then `get` must match (property-style, fixed cases)."
+        },
+        {
+          "id": "lib:test::set_i128_get_roundtrip",
+          "name": "test::set_i128_get_roundtrip",
+          "shortName": "set_i128_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_i128` / `get_i128` including min/max-style values."
+        },
+        {
+          "id": "lib:test::set_pointer_get_roundtrip",
+          "name": "test::set_pointer_get_roundtrip",
+          "shortName": "set_pointer_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_pointer(Option<Address>)` / `get_pointer` (Some + None paths)."
+        },
+        {
+          "id": "lib:test::set_max_u32_get_roundtrip",
+          "name": "test::set_max_u32_get_roundtrip",
+          "shortName": "set_max_u32_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "Boundary: stores and reads `u32::MAX` through the primary slot."
+        },
+        {
           "id": "lib:test::set_signed_get_roundtrip",
           "name": "test::set_signed_get_roundtrip",
           "shortName": "set_signed_get_roundtrip",
@@ -118,6 +228,15 @@
           "kindLabel": "Unit",
           "outcome": "passed",
           "detail": "Signed i32 path: `set_signed` / `get_signed` round-trip (−17)."
+        },
+        {
+          "id": "lib:test::set_symbol_get_roundtrip",
+          "name": "test::set_symbol_get_roundtrip",
+          "shortName": "set_symbol_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_symbol(String)` / `get_symbol` as `Symbol` round-trip."
         },
         {
           "id": "lib:test::set_tag_get_roundtrip",
@@ -138,22 +257,31 @@
           "detail": "Writes 42 via `set`, reads back with `get` — basic round-trip."
         },
         {
-          "id": "lib:test::property_set_get_roundtrip_for_many_values",
-          "name": "test::property_set_get_roundtrip_for_many_values",
-          "shortName": "property_set_get_roundtrip_for_many_values",
-          "kind": "property",
-          "kindLabel": "Property (sweep)",
+          "id": "lib:test::set_u128_get_roundtrip",
+          "name": "test::set_u128_get_roundtrip",
+          "shortName": "set_u128_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
           "outcome": "passed",
-          "detail": "Deterministic sweep: for each value in 0..100, `set` then `get` must match (property-style, fixed cases)."
+          "detail": "`set_u128` / `get_u128` wide integer round-trip."
         },
         {
-          "id": "lib:test::invariant_signed_last_write_visible_on_get_signed",
-          "name": "test::invariant_signed_last_write_visible_on_get_signed",
-          "shortName": "invariant_signed_last_write_visible_on_get_signed",
+          "id": "lib:test::invariant_primary_unchanged_under_u128_only_writes",
+          "name": "test::invariant_primary_unchanged_under_u128_only_writes",
+          "shortName": "invariant_primary_unchanged_under_u128_only_writes",
           "kind": "invariant",
           "kindLabel": "Invariant",
           "outcome": "passed",
-          "detail": "Invariant: random `i32` sequence via `set_signed`; `get_signed()` always equals the last written signed value (Proptest)."
+          "detail": "Cross-slot: anchor `u32`, then only `set_u128`; primary unchanged, u128 last-write wins."
+        },
+        {
+          "id": "lib:test::invariant_i128_wide_unchanged_under_flag_only_writes",
+          "name": "test::invariant_i128_wide_unchanged_under_flag_only_writes",
+          "shortName": "invariant_i128_wide_unchanged_under_flag_only_writes",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Cross-slot: anchor `i128`, then only `set_flag`; wide int unchanged, flag last-write wins."
         },
         {
           "id": "lib:test::invariant_counter_last_write_visible_on_get_counter",
@@ -165,6 +293,24 @@
           "detail": "Invariant: random `u64` sequence via `set_counter`; `get_counter()` always equals the last counter write (Proptest)."
         },
         {
+          "id": "lib:test::invariant_signed_last_write_visible_on_get_signed",
+          "name": "test::invariant_signed_last_write_visible_on_get_signed",
+          "shortName": "invariant_signed_last_write_visible_on_get_signed",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Invariant: random `i32` sequence via `set_signed`; `get_signed()` always equals the last written signed value (Proptest)."
+        },
+        {
+          "id": "lib:test::invariant_u128_last_write_visible",
+          "name": "test::invariant_u128_last_write_visible",
+          "shortName": "invariant_u128_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: random `u128` sequence; `get_u128` equals last write."
+        },
+        {
           "id": "lib:test::invariant_last_write_visible_on_get",
           "name": "test::invariant_last_write_visible_on_get",
           "shortName": "invariant_last_write_visible_on_get",
@@ -174,15 +320,6 @@
           "detail": "Invariant: after a non-empty sequence of random `set`s, `get()` equals the last written value (Proptest, vec length 1–39)."
         },
         {
-          "id": "lib:test::invariant_signed_unchanged_under_primary_only_writes",
-          "name": "test::invariant_signed_unchanged_under_primary_only_writes",
-          "shortName": "invariant_signed_unchanged_under_primary_only_writes",
-          "kind": "invariant",
-          "kindLabel": "Invariant",
-          "outcome": "passed",
-          "detail": "Cross-slot: fix signed with `set_signed(anchor)`, then only `set` on primary; `get_signed()` stays `anchor` while `get()` follows last-write wins (Proptest)."
-        },
-        {
           "id": "lib:test::invariant_primary_unchanged_under_signed_only_writes",
           "name": "test::invariant_primary_unchanged_under_signed_only_writes",
           "shortName": "invariant_primary_unchanged_under_signed_only_writes",
@@ -190,6 +327,15 @@
           "kindLabel": "Invariant",
           "outcome": "passed",
           "detail": "Cross-slot: fix primary with `set(anchor)`, then only `set_signed` updates; `get()` stays `anchor` while `get_signed()` follows last-write wins (Proptest)."
+        },
+        {
+          "id": "lib:test::invariant_signed_unchanged_under_primary_only_writes",
+          "name": "test::invariant_signed_unchanged_under_primary_only_writes",
+          "shortName": "invariant_signed_unchanged_under_primary_only_writes",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Cross-slot: fix signed with `set_signed(anchor)`, then only `set` on primary; `get_signed()` stays `anchor` while `get()` follows last-write wins (Proptest)."
         },
         {
           "id": "lib:test::fuzz_set_get_random_u32",
@@ -207,10 +353,10 @@
       "name": "Integration tests",
       "path": "contracts/basic-storage/tests/integration_contract.rs",
       "description": "Multi-step flows in a separate test binary (conventional Rust layout).",
-      "passed": 2,
+      "passed": 3,
       "failed": 0,
       "ok": true,
-      "tail": "test integration_sequence_matches_property_last_write_wins ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+      "tail": "test integration_multi_slot_roundtrip_and_isolation ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
       "tests": [
         {
           "id": "integration:integration_alternating_writes_read_as_last_value",
@@ -229,6 +375,15 @@
           "kindLabel": "Integration",
           "outcome": "passed",
           "detail": "Integration binary: fixed sequence [7,14,21,42]; after each step `get` equals the value just set."
+        },
+        {
+          "id": "integration:integration_multi_slot_roundtrip_and_isolation",
+          "name": "integration_multi_slot_roundtrip_and_isolation",
+          "shortName": "integration_multi_slot_roundtrip_and_isolation",
+          "kind": "integration",
+          "kindLabel": "Integration",
+          "outcome": "passed",
+          "detail": "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>; reads all back; then checks u32 update does not clobber i32 / i128."
         }
       ]
     }

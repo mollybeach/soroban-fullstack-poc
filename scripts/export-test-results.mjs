@@ -26,6 +26,17 @@ function sanitizeTail(text) {
 const repoRoot = join(__dirname, "..");
 const contractDir = join(repoRoot, "contracts", "basic-storage");
 const outPath = join(repoRoot, "frontend", "public", "test-results.json");
+const envLocalPath = join(repoRoot, "frontend", ".env.local");
+
+/** `NEXT_PUBLIC_CONTRACT_ID` from `frontend/.env.local` when present (for /tests context). */
+function readNextPublicContractIdFromEnvLocal() {
+  if (!existsSync(envLocalPath)) return null;
+  const text = readFileSync(envLocalPath, "utf8");
+  const m = text.match(/^\s*NEXT_PUBLIC_CONTRACT_ID\s*=\s*(\S+)/m);
+  if (!m) return null;
+  const id = m[1].trim().replace(/^["']|["']$/g, "");
+  return id.length > 0 ? id : null;
+}
 
 /** Human-readable detail per test (key = full cargo test name, e.g. test::foo or integration_bar). */
 const TEST_DETAILS = {
@@ -61,6 +72,33 @@ const TEST_DETAILS = {
     "Integration binary: alternating `set` steps; `get` always reflects the latest write.",
   "integration_sequence_matches_property_last_write_wins":
     "Integration binary: fixed sequence [7,14,21,42]; after each step `get` equals the value just set.",
+  "integration_multi_slot_roundtrip_and_isolation":
+    "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>; reads all back; then checks u32 update does not clobber i32 / i128.",
+  "test::set_flag_get_roundtrip": "`set_flag` / `get_flag` round-trip.",
+  "test::set_i64_get_roundtrip": "`set_i64` / `get_i64` round-trip.",
+  "test::set_blob_get_roundtrip": "`set_blob` / `get_blob` with short `Bytes` payload.",
+  "test::set_u128_get_roundtrip": "`set_u128` / `get_u128` wide integer round-trip.",
+  "test::set_symbol_get_roundtrip": "`set_symbol(String)` / `get_symbol` as `Symbol` round-trip.",
+  "test::set_pointer_get_roundtrip": "`set_pointer(Option<Address>)` / `get_pointer` (Some + None paths).",
+  "test::set_i128_get_roundtrip": "`set_i128` / `get_i128` including min/max-style values.",
+  "test::invariant_flag_last_write_visible_on_get_flag":
+    "Proptest: random bool sequence on `set_flag`; `get_flag` equals last write.",
+  "test::invariant_i64_last_write_visible":
+    "Proptest: random `i64` sequence; `get_i64` equals last write.",
+  "test::invariant_u128_last_write_visible":
+    "Proptest: random `u128` sequence; `get_u128` equals last write.",
+  "test::invariant_i128_last_write_visible":
+    "Proptest: random `i128` sequence; `get_i128` equals last write.",
+  "test::invariant_blob_last_write_visible":
+    "Proptest: bounded random `Bytes` chunks; `get_blob` equals last write.",
+  "test::invariant_symbol_last_write_visible":
+    "Proptest: ASCII label sequence via `set_symbol`; `get_symbol` matches last `Symbol`.",
+  "test::invariant_pointer_optional_last_write_matches_sequence":
+    "Proptest: alternating Some/None `set_pointer`; final `get_pointer` matches last op.",
+  "test::invariant_primary_unchanged_under_u128_only_writes":
+    "Cross-slot: anchor `u32`, then only `set_u128`; primary unchanged, u128 last-write wins.",
+  "test::invariant_i128_wide_unchanged_under_flag_only_writes":
+    "Cross-slot: anchor `i128`, then only `set_flag`; wide int unchanged, flag last-write wins.",
 };
 
 const CATEGORIES = [
@@ -272,15 +310,21 @@ const externalRuns = [
     makeTarget: "make fuzz",
     cli: "cd contracts/basic-storage/fuzz && cargo fuzz run storage_set_get -- -runs=1000",
     description:
-      "Interprets random bytes as a little-endian `u32`, calls `set`/`get`, asserts equality. Exercises the same contract invariants under arbitrary bytes.",
+      "Decodes `u32`, `i64`, `u128`, `bool`, and bounded `Bytes` from random input; asserts round-trips on independent slots (same WASM as the repo contract).",
     note: "Not run by this script. Execute locally or in a job with `cargo-fuzz` and LLVM fuzzer deps installed.",
   },
 ];
+
+const pocContractId = readNextPublicContractIdFromEnvLocal();
 
 const payload = {
   schemaVersion: 2,
   generatedAt: new Date().toISOString(),
   success: overallOk,
+  /** Testnet id from `frontend/.env.local` at export time (Home/Demo wallet flows); not used by `cargo test`. */
+  pocContractId,
+  testScopeNote:
+    "These rows come from `cargo test` in `contracts/basic-storage` (isolated Soroban `Env` per case). They do not hit testnet RPC. `pocContractId` is the demo contract id captured from `frontend/.env.local` when this JSON was generated.",
   summary: {
     passed: totalPassed,
     failed: totalFailed,

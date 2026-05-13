@@ -228,11 +228,53 @@ export default function DocsPage() {
                 <td className="px-3 py-2 font-mono text-xs">get_tag() -&gt; String</td>
                 <td className="px-3 py-2 font-mono text-xs">TagSet</td>
               </tr>
-              <tr>
+              <tr className="border-b border-slate-100">
                 <td className="px-3 py-2">Unsigned 64-bit</td>
                 <td className="px-3 py-2 font-mono text-xs">set_counter(n: u64)</td>
                 <td className="px-3 py-2 font-mono text-xs">get_counter() -&gt; u64</td>
                 <td className="px-3 py-2 font-mono text-xs">CounterSet</td>
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="px-3 py-2">Boolean</td>
+                <td className="px-3 py-2 font-mono text-xs">set_flag(on: bool)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_flag() -&gt; bool</td>
+                <td className="px-3 py-2 font-mono text-xs">FlagSet</td>
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="px-3 py-2">Signed 64-bit</td>
+                <td className="px-3 py-2 font-mono text-xs">set_i64(v: i64)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_i64() -&gt; i64</td>
+                <td className="px-3 py-2 font-mono text-xs">I64Set</td>
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="px-3 py-2">Bytes (≤64)</td>
+                <td className="px-3 py-2 font-mono text-xs">set_blob(data: Bytes)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_blob() -&gt; Bytes</td>
+                <td className="px-3 py-2 font-mono text-xs">BlobSet</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2">Unsigned 128-bit</td>
+                <td className="px-3 py-2 font-mono text-xs">set_u128(v: u128)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_u128() -&gt; u128</td>
+                <td className="px-3 py-2 font-mono text-xs">WideU128Set</td>
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="px-3 py-2">Symbol (short)</td>
+                <td className="px-3 py-2 font-mono text-xs">set_symbol(label: String)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_symbol() -&gt; Symbol</td>
+                <td className="px-3 py-2 font-mono text-xs">CodeSet (len)</td>
+              </tr>
+              <tr className="border-b border-slate-100">
+                <td className="px-3 py-2">Optional address</td>
+                <td className="px-3 py-2 font-mono text-xs">set_pointer(who: Option&lt;Address&gt;)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_pointer() -&gt; Option&lt;Address&gt;</td>
+                <td className="px-3 py-2 font-mono text-xs">PointerSet</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2">Signed 128-bit</td>
+                <td className="px-3 py-2 font-mono text-xs">set_i128(v: i128)</td>
+                <td className="px-3 py-2 font-mono text-xs">get_i128() -&gt; i128</td>
+                <td className="px-3 py-2 font-mono text-xs">WideI128Set</td>
               </tr>
             </tbody>
           </table>
@@ -242,6 +284,7 @@ export default function DocsPage() {
           <code className="rounded bg-slate-100 px-1">set</code>, the app detects missing{" "}
           <code className="rounded bg-slate-100 px-1">get_signed</code> (etc.) on the client built from
           chain spec and <strong>disables</strong> the extended forms until you redeploy and update the env id.
+          If the contract has i32 / String / u64 but not <code className="rounded bg-slate-100 px-1">get_flag</code>, the home page enables those three writes and shows a notice until you deploy wasm that includes the wide types (bool, i64, Bytes, u128). If <code className="rounded bg-slate-100 px-1">get_flag</code> exists but <code className="rounded bg-slate-100 px-1">get_symbol</code> does not, you get the eight-slot tier only; redeploy again for Symbol, optional <code className="rounded bg-slate-100 px-1">Address</code>, and <code className="rounded bg-slate-100 px-1">i128</code>.
         </p>
       </Section>
 

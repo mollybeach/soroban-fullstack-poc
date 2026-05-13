@@ -60,6 +60,9 @@ type TestResultsPayload = {
   schemaVersion?: number;
   generatedAt: string;
   success: boolean;
+  /** From `frontend/.env.local` when `export-test-results.mjs` runs; demo / wallet target on testnet. */
+  pocContractId?: string | null;
+  testScopeNote?: string;
   summary: { passed: number; failed: number; ignored: number };
   categories?: TestCategory[];
   externalRuns?: ExternalRun[];
@@ -138,6 +141,7 @@ const FALLBACK: TestResultsPayload = {
   schemaVersion: 2,
   generatedAt: new Date(0).toISOString(),
   success: true,
+  pocContractId: null,
   summary: { passed: 16, failed: 0, ignored: 0 },
   categories: DEFAULT_CATEGORIES,
   externalRuns: [
@@ -337,6 +341,36 @@ export default function TestsPage() {
               </code>{" "}
               to run that plus refresh this page’s JSON.
             </p>
+            {(() => {
+              const cid =
+                (d.pocContractId && d.pocContractId.trim()) ||
+                (typeof process.env.NEXT_PUBLIC_CONTRACT_ID === "string"
+                  ? process.env.NEXT_PUBLIC_CONTRACT_ID.trim()
+                  : "");
+              if (!cid) return null;
+              const expert = `https://stellar.expert/explorer/testnet/contract/${cid}`;
+              return (
+                <div className="mt-4 max-w-2xl rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-100">
+                  <p className="font-semibold text-slate-900">Demo testnet contract (from export)</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-800 sm:text-sm">{cid}</p>
+                  <p className="mt-2">
+                    <a
+                      href={expert}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+                    >
+                      Open on Stellar Expert (testnet)
+                    </a>
+                  </p>
+                  {d.testScopeNote ? (
+                    <p className="mt-2 border-t border-slate-200/80 pt-2 text-xs leading-relaxed text-slate-600">
+                      {d.testScopeNote}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })()}
           </div>
           <div
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold shadow-sm ${

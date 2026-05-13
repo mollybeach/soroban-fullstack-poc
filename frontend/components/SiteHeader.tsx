@@ -6,6 +6,7 @@ import {
   BookOpen,
   CirclePlay,
   FlaskConical,
+  House,
   LogOut,
   Wallet,
 } from "lucide-react";
@@ -32,7 +33,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-violet-200/60 bg-white/80 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 pb-2 pt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:pb-0 sm:pt-0 sm:h-14">
+      <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 pb-2 pt-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-6 lg:px-10 sm:pb-0 sm:pt-0 sm:h-14">
         <div className="flex min-w-0 flex-1 items-center justify-between gap-3 sm:justify-start sm:gap-8">
           <Link
             href="/"
@@ -40,34 +41,61 @@ export function SiteHeader() {
           >
             Soroban POC
           </Link>
-          <nav className="flex items-center gap-1 text-sm font-medium text-slate-600 sm:ml-0">
+          <nav className="flex items-center gap-0.5 text-sm font-medium text-slate-600 sm:ml-0 sm:gap-1">
             <Link
               href="/"
-              className="rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+              title="Home"
+              aria-label="Home"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
             >
-              Home
+              <House className="h-4 w-4 shrink-0 text-violet-700 sm:hidden" aria-hidden />
+              <span className="hidden sm:inline">Home</span>
             </Link>
             <Link
               href="/demo"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+              title="Demo"
+              aria-label="Demo"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
             >
-              <CirclePlay className="h-4 w-4" aria-hidden />
-              Demo
+              <CirclePlay className="h-4 w-4 shrink-0 text-violet-700 sm:text-current" aria-hidden />
+              <span className="hidden sm:inline">Demo</span>
             </Link>
             <Link
               href="/docs"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+              title="Docs"
+              aria-label="Docs"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
             >
-              <BookOpen className="h-4 w-4" aria-hidden />
-              Docs
+              <BookOpen className="h-4 w-4 shrink-0 text-violet-700 sm:text-current" aria-hidden />
+              <span className="hidden sm:inline">Docs</span>
             </Link>
             <Link
               href="/tests"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 transition hover:bg-violet-100 hover:text-violet-900"
+              title="Tests"
+              aria-label="Tests"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
             >
-              <FlaskConical className="h-4 w-4" aria-hidden />
-              Tests
+              <FlaskConical className="h-4 w-4 shrink-0 text-violet-700 sm:text-current" aria-hidden />
+              <span className="hidden sm:inline">Tests</span>
             </Link>
+            <a
+              href="https://github.com/mollybeach/soroban-fullstack-poc"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="GitHub"
+              aria-label="GitHub repository"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 text-slate-600 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
+            >
+              <img
+                src="/github-favicon.svg"
+                alt=""
+                width={16}
+                height={16}
+                className="h-4 w-4 shrink-0 opacity-90"
+                aria-hidden
+              />
+              <span className="hidden sm:inline">GitHub</span>
+            </a>
           </nav>
         </div>
 

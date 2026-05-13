@@ -4,7 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CONTRACT_DIR="$REPO_ROOT/contracts/basic-storage"
-WASM_PATH="$CONTRACT_DIR/target/wasm32v1-none/release/basic_storage.wasm"
+RELEASE_DIR="$CONTRACT_DIR/target/wasm32v1-none/release"
+WASM_PATH="$RELEASE_DIR/basic_storage.wasm"
 # Override with: ./scripts/deploy-testnet.sh my-alias  OR  STELLAR_SOURCE_ACCOUNT=my-alias ./scripts/deploy-testnet.sh
 SOURCE_ACCOUNT="${STELLAR_SOURCE_ACCOUNT:-${1:-soroban-poc-deployer}}"
 
@@ -17,7 +18,16 @@ fi
 
 cd "$CONTRACT_DIR"
 
-stellar contract build
+# Always copy wasm into the repo: when CARGO_TARGET_DIR points outside the tree,
+# `stellar contract build` alone leaves `target/.../basic_storage.wasm` stale and
+# deploy would upload an old 4-field contract while the build log shows the new spec.
+mkdir -p "$RELEASE_DIR"
+stellar contract build --out-dir "$RELEASE_DIR"
+
+if [[ ! -f "$WASM_PATH" ]]; then
+  echo "error: expected wasm at $WASM_PATH after stellar contract build --out-dir" >&2
+  exit 1
+fi
 
 CONTRACT_ID=$(stellar contract deploy \
   --wasm "$WASM_PATH" \

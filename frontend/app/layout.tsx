@@ -6,6 +6,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Soroban Fullstack POC",
   description: "Minimal Stellar testnet contract read/write POC",
+  icons: {
+    icon: [{ url: "/github-favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/github-favicon.svg",
+  },
 };
 
 export default function RootLayout({
