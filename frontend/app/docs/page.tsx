@@ -65,6 +65,7 @@ export default function DocsPage() {
           <strong>writes</strong> with a pluggable signer: <strong>Freighter</strong> (browser extension)
           or <strong>WalletConnect</strong> (Reown AppKit + <code className="rounded bg-slate-100 px-1">stellar:testnet</code> /{" "}
           <code className="rounded bg-slate-100 px-1">stellar_signXDR</code> for mobile wallets).
+          The WalletConnect picker lists every Explorer wallet tagged with <code className="rounded bg-slate-100 px-1">stellar:testnet</code>, plus LOBSTR, Klever, OneKey, Bitget, Trezor Suite, Ledger Wallet, MetaMask, and Coinbase Wallet where they have WC listings. The session is still <strong>Stellar testnet only</strong>; Albedo, xBull, Hana, and Rabet are not on WC for that chain—use Freighter in the browser or a Stellar Wallets Kit integration for those.
         </p>
         <p>
           The goal is the <strong>developer lifecycle</strong>—build, test, deploy, invoke from a
