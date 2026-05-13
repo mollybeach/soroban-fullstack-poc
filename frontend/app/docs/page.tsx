@@ -5,7 +5,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Documentation | Soroban Fullstack POC",
   description:
-    "How the Soroban testnet POC works: contract storage, events, reads, writes, Freighter, testing, and the home page UI.",
+    "How the Soroban testnet POC works: contract storage, events, reads, writes, Freighter, WalletConnect, testing, and the home page UI.",
 };
 
 function Section({
@@ -62,7 +62,9 @@ export default function DocsPage() {
           <strong>Stellar testnet</strong>: a small <strong>Soroban</strong> contract written in
           Rust, deployed with the <strong>Stellar CLI</strong>, and a <strong>Next.js</strong>{" "}
           frontend that <strong>reads</strong> contract state via Soroban RPC (simulation) and{" "}
-          <strong>writes</strong> by asking <strong>Freighter</strong> to sign transactions.
+          <strong>writes</strong> with a pluggable signer: <strong>Freighter</strong> (browser extension)
+          or <strong>WalletConnect</strong> (Reown AppKit + <code className="rounded bg-slate-100 px-1">stellar:testnet</code> /{" "}
+          <code className="rounded bg-slate-100 px-1">stellar_signXDR</code> for mobile wallets).
         </p>
         <p>
           The goal is the <strong>developer lifecycle</strong>—build, test, deploy, invoke from a
@@ -84,13 +86,13 @@ export default function DocsPage() {
             <code className="rounded bg-slate-100 px-1">frontend/lib/stellar.ts</code> — Creates
             the Stellar SDK <strong>contract client</strong> pointed at your{" "}
             <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_CONTRACT_ID</code>, uses public{" "}
-            <strong>Soroban testnet RPC</strong>, and wires <strong>Freighter</strong> as the signer
-            for <code className="rounded bg-slate-100 px-1">signAndSend</code>.
+            <strong>Soroban testnet RPC</strong>, and accepts a <strong>signTransaction</strong> callback from{" "}
+            <code className="rounded bg-slate-100 px-1">WalletProvider</code> (Freighter or WalletConnect).
           </li>
           <li>
             <code className="rounded bg-slate-100 px-1">frontend/app/page.tsx</code> — Home UI:
             snapshot reads, four write forms, transaction log, and wallet state from{" "}
-            <code className="rounded bg-slate-100 px-1">FreighterProvider</code> (header).
+            <code className="rounded bg-slate-100 px-1">WalletProvider</code> (header).
           </li>
           <li>
             <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_CONTRACT_ID</code> in{" "}
@@ -98,6 +100,17 @@ export default function DocsPage() {
             <strong>C…</strong> contract address returned after <code className="rounded bg-slate-100 px-1">make deploy</code>
             . Next.js only reads this at <strong>build time</strong> for production hosts; local dev
             picks it up when the dev server starts.
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code> in{" "}
+            <code className="rounded bg-slate-100 px-1">frontend/.env.local</code> — From{" "}
+            <a
+              href="https://dashboard.reown.com/"
+              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            >
+              Reown (WalletConnect Cloud)
+            </a>
+            . Enables the WalletConnect connect option; omit it to use Freighter only.
           </li>
         </ul>
       </Section>
@@ -260,7 +273,7 @@ export default function DocsPage() {
 
         <h3 className="mt-6 text-base font-semibold text-violet-900">Writes (testnet)</h3>
         <p>
-          Four forms map one-to-one to the contract setters. You must <strong>Connect Freighter</strong>{" "}
+          Four forms map one-to-one to the contract setters. You must <strong>connect your wallet</strong>{" "}
           (header, top right) first: writes are <strong>signed transactions</strong> paid by your
           testnet account, so it needs a small XLM balance for fees.
         </p>

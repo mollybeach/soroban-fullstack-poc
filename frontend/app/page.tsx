@@ -14,11 +14,13 @@ import {
   FileCode,
   Hash,
   PencilLine,
+  QrCode,
   RefreshCw,
   ScrollText,
   Sparkles,
   Tag,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import {
   readContractSnapshot,
@@ -30,7 +32,7 @@ import {
   getOptionalContractId,
   stellarExpertContractUrl,
 } from "@/lib/stellar";
-import { useFreighter } from "@/contexts/freighter-context";
+import { useWallet } from "@/contexts/wallet-context";
 
 type LogLevel = "info" | "warn" | "ok" | "error";
 
@@ -59,7 +61,16 @@ const DEMO_WRITE_VALUES = {
 } as const;
 
 export default function HomePage() {
-  const { publicKey } = useFreighter();
+  const {
+    publicKey,
+    signTransaction,
+    connectFreighter,
+    connectWalletConnect,
+    walletConnectConfigured,
+  } = useWallet();
+  const [walletConnectError, setWalletConnectError] = useState<string | null>(
+    null,
+  );
   const [stored, setStored] = useState<number | null>(null);
   const [storedSigned, setStoredSigned] = useState<number | null>(null);
   const [storedTag, setStoredTag] = useState<string | null>(null);
@@ -103,6 +114,12 @@ export default function HomePage() {
       loggedPkRef.current = null;
     }
   }, [publicKey, appendLog]);
+
+  useEffect(() => {
+    if (publicKey) {
+      setWalletConnectError(null);
+    }
+  }, [publicKey]);
 
   const refresh = useCallback(async () => {
     setLoadingRead(true);
@@ -157,14 +174,36 @@ export default function HomePage() {
     }
   }, [txLog]);
 
-  async function requireWallet(): Promise<string | null> {
-    if (!publicKey) {
-      const msg = "Connect Freighter first (top right) to submit a write transaction.";
+  async function requireWallet(): Promise<{
+    publicKey: string;
+    signTransaction: NonNullable<typeof signTransaction>;
+  } | null> {
+    if (!publicKey || !signTransaction) {
+      const msg =
+        "Connect your wallet first (header or banner below), then try the write again.";
       setStatus(msg);
       appendLog("warn", msg);
       return null;
     }
-    return publicKey;
+    return { publicKey, signTransaction };
+  }
+
+  async function onConnectFreighterFromPage() {
+    setWalletConnectError(null);
+    try {
+      await connectFreighter();
+    } catch (e) {
+      setWalletConnectError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function onConnectWalletConnectFromPage() {
+    setWalletConnectError(null);
+    try {
+      await connectWalletConnect();
+    } catch (e) {
+      setWalletConnectError(e instanceof Error ? e.message : String(e));
+    }
   }
 
   const appendBadSeqHintIfNeeded = useCallback(
@@ -196,8 +235,9 @@ export default function HomePage() {
   async function onSubmitSet(e: FormEvent) {
     e.preventDefault();
     if (writeInFlightRef.current) return;
-    const pk = await requireWallet();
-    if (!pk) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
     const n = Number(writeInput);
     if (!Number.isFinite(n)) {
       const msg = "Enter a numeric value for set().";
@@ -211,7 +251,7 @@ export default function HomePage() {
     setStatus("Signing and submitting…");
     appendLog("info", `set(${value}): awaiting signature in Freighter…`);
     try {
-      const sent = await writeStoredU32(value, pk);
+      const sent = await writeStoredU32(value, pk, signTx);
       appendLog(
         "ok",
         `set(${value}) submitted. Result: ${sent.result === null || sent.result === undefined ? "(none — set has no return value)" : String(sent.result)}`,
@@ -234,8 +274,9 @@ export default function HomePage() {
   async function onSubmitSigned(e: FormEvent) {
     e.preventDefault();
     if (writeInFlightRef.current) return;
-    const pk = await requireWallet();
-    if (!pk) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
     const n = Number(signedInput);
     if (!Number.isFinite(n) || !Number.isInteger(n)) {
       appendLog("warn", "Enter an integer for set_signed (i32).");
@@ -247,7 +288,7 @@ export default function HomePage() {
     setStatus("Signing set_signed…");
     appendLog("info", `set_signed(${v}): awaiting Freighter…`);
     try {
-      const sent = await writeSigned(v, pk);
+      const sent = await writeSigned(v, pk, signTx);
       appendLog("ok", `set_signed submitted. Result: ${String(sent.result)}`);
       await refresh();
       setStatus("set_signed submitted.");
@@ -265,14 +306,15 @@ export default function HomePage() {
   async function onSubmitTag(e: FormEvent) {
     e.preventDefault();
     if (writeInFlightRef.current) return;
-    const pk = await requireWallet();
-    if (!pk) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
     writeInFlightRef.current = true;
     setWritePending(true);
     setStatus("Signing set_tag…");
     appendLog("info", `set_tag(${JSON.stringify(tagInput)}): awaiting Freighter…`);
     try {
-      const sent = await writeTag(tagInput, pk);
+      const sent = await writeTag(tagInput, pk, signTx);
       appendLog("ok", `set_tag submitted. Result: ${String(sent.result)}`);
       await refresh();
       setStatus("set_tag submitted.");
@@ -290,8 +332,9 @@ export default function HomePage() {
   async function onSubmitCounter(e: FormEvent) {
     e.preventDefault();
     if (writeInFlightRef.current) return;
-    const pk = await requireWallet();
-    if (!pk) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
     let n: bigint;
     try {
       n = BigInt(counterInput.trim() || "0");
@@ -304,7 +347,7 @@ export default function HomePage() {
     setStatus("Signing set_counter…");
     appendLog("info", `set_counter(${n}): awaiting Freighter…`);
     try {
-      const sent = await writeCounter(n, pk);
+      const sent = await writeCounter(n, pk, signTx);
       appendLog("ok", `set_counter submitted. Result: ${String(sent.result)}`);
       await refresh();
       setStatus("set_counter submitted.");
@@ -334,6 +377,8 @@ export default function HomePage() {
   const readDisplay = (v: string | number | null) =>
     loadingRead ? "…" : v === null ? "—" : String(v);
 
+  const walletReady = Boolean(publicKey && signTransaction);
+
   const logColor = (level: LogLevel) => {
     switch (level) {
       case "ok":
@@ -354,8 +399,9 @@ export default function HomePage() {
           Soroban fullstack POC
         </h1>
         <p className="mt-3 text-slate-600 leading-relaxed">
-          Minimal testnet flow: simulate <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm text-violet-900">get*</code>, submit writes via
-          Freighter. Each write emits a contract event (
+          Minimal testnet flow: simulate <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm text-violet-900">get*</code>, then{" "}
+          <strong>connect your wallet</strong> — <strong>Freighter</strong> (browser) or{" "}
+          <strong>WalletConnect</strong> (e.g. mobile) on Stellar testnet — to sign writes. Each write emits a contract event (
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">ValueSet</code>,{" "}
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">SignedSet</code>,{" "}
           <code className="rounded bg-violet-100 px-1.5 py-0.5 text-sm">TagSet</code>,{" "}
@@ -387,6 +433,59 @@ export default function HomePage() {
           )}
         </div>
       </div>
+
+      {!publicKey ? (
+        <div
+          className="rounded-3xl border-2 border-dashed border-violet-300 bg-gradient-to-br from-violet-50 to-fuchsia-50/80 p-6 shadow-inner sm:p-8"
+          role="region"
+          aria-label="Connect wallet"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
+                <Wallet className="h-5 w-5 text-violet-600" aria-hidden />
+                Connect wallet
+              </h2>
+              <p className="max-w-xl text-sm text-slate-700 leading-relaxed">
+                Writes are signed Soroban transactions. Use{" "}
+                <strong>Freighter</strong> in the browser, or <strong>WalletConnect</strong> for a QR
+                session (Freighter mobile and other Stellar wallets that support{" "}
+                <code className="rounded bg-violet-100 px-1 text-xs">stellar:testnet</code> +{" "}
+                <code className="rounded bg-violet-100 px-1 text-xs">stellar_signXDR</code>
+                ). Set <code className="rounded bg-violet-100 px-1 text-xs">NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID</code>{" "}
+                for WalletConnect. Reads below still work without a wallet (RPC simulation only).
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+              <button
+                type="button"
+                onClick={() => void onConnectFreighterFromPage()}
+                className={btnAccent}
+              >
+                <Wallet className="h-4 w-4 shrink-0" aria-hidden />
+                Freighter
+              </button>
+              <button
+                type="button"
+                onClick={() => void onConnectWalletConnectFromPage()}
+                disabled={!walletConnectConfigured}
+                title={
+                  walletConnectConfigured
+                    ? "Open WalletConnect (Reown AppKit)"
+                    : "Add NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID to .env.local"
+                }
+                className={`${btnPrimary} disabled:pointer-events-none disabled:opacity-45`}
+              >
+                <QrCode className="h-4 w-4 shrink-0" aria-hidden />
+                WalletConnect
+              </button>
+            </div>
+          </div>
+          {walletConnectError ? (
+            <p className="mt-4 text-sm text-rose-700">{walletConnectError}</p>
+          ) : null}
+        </div>
+      ) : null}
 
       {hasExtendedApi === false ? (
         <div
@@ -477,8 +576,17 @@ export default function HomePage() {
           </button>
         </div>
         <p className="mt-3 text-xs text-slate-500">
-          Submit one write at a time and approve once in Freighter. A second submit while another is in flight often causes{" "}
-          <code className="rounded bg-slate-100 px-1">txBadSeq</code>.
+          {walletReady ? (
+            <>
+              Submit one write at a time and approve once in your wallet. A second submit while
+              another is in flight often causes{" "}
+              <code className="rounded bg-slate-100 px-1">txBadSeq</code>.
+            </>
+          ) : (
+            <>
+              Connect your wallet above to enable writes. Until then, submit buttons stay disabled.
+            </>
+          )}
         </p>
         <div className="mt-6 space-y-5">
           <form
@@ -492,10 +600,14 @@ export default function HomePage() {
                 value={writeInput}
                 onChange={(ev) => setWriteInput(ev.target.value)}
                 inputMode="numeric"
-                disabled={writePending}
+                disabled={writePending || !walletReady}
               />
             </label>
-            <button type="submit" disabled={writePending} className={btnAccent}>
+            <button
+              type="submit"
+              disabled={writePending || !walletReady}
+              className={btnAccent}
+            >
               <Hash className="h-4 w-4" aria-hidden />
               set() — ValueSet
             </button>
@@ -511,12 +623,12 @@ export default function HomePage() {
                 value={signedInput}
                 onChange={(ev) => setSignedInput(ev.target.value)}
                 inputMode="numeric"
-                disabled={hasExtendedApi !== true || writePending}
+                disabled={hasExtendedApi !== true || writePending || !walletReady}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true || writePending}
+              disabled={hasExtendedApi !== true || writePending || !walletReady}
               className={btnAccent}
             >
               <Binary className="h-4 w-4" aria-hidden />
@@ -534,12 +646,12 @@ export default function HomePage() {
                 value={tagInput}
                 onChange={(ev) => setTagInput(ev.target.value)}
                 maxLength={200}
-                disabled={hasExtendedApi !== true || writePending}
+                disabled={hasExtendedApi !== true || writePending || !walletReady}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true || writePending}
+              disabled={hasExtendedApi !== true || writePending || !walletReady}
               className={btnAccent}
             >
               <Tag className="h-4 w-4" aria-hidden />
@@ -557,12 +669,12 @@ export default function HomePage() {
                 value={counterInput}
                 onChange={(ev) => setCounterInput(ev.target.value)}
                 inputMode="numeric"
-                disabled={hasExtendedApi !== true || writePending}
+                disabled={hasExtendedApi !== true || writePending || !walletReady}
               />
             </label>
             <button
               type="submit"
-              disabled={hasExtendedApi !== true || writePending}
+              disabled={hasExtendedApi !== true || writePending || !walletReady}
               className={btnAccent}
             >
               <ScrollText className="h-4 w-4" aria-hidden />

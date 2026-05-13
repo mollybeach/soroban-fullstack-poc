@@ -191,6 +191,8 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make deploy` | `./scripts/deploy-testnet.sh` — defaults to identity **`soroban-poc-deployer`**; optional `SOURCE_ACCOUNT=` or env **`STELLAR_SOURCE_ACCOUNT`** |
 | `make dev-frontend` | `npm run dev` in `frontend/` |
 
+The **`/tests`** Next.js route reads `frontend/public/test-results.json` (and optional `coverage-summary.json`). For how that pipeline works, what the numbers mean, and how success is interpreted, see [frontend/docs/ContractTestsDashboard.md](frontend/docs/ContractTestsDashboard.md).
+
 Typical first-time setup and verification:
 
 ```bash
@@ -310,7 +312,7 @@ npm install
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`).
+Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`). For **WalletConnect** (Reown / mobile wallets), also set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [Reown Cloud](https://dashboard.reown.com/).
 
 If `next build` fails with **`Cannot find module './cjs/react.production.js'`**, your `node_modules` tree is incomplete. From the repo root run **`make install-frontend`** or **`make build-frontend`** (the Makefile refreshes deps when that file is missing), or remove modules with **`make clean-frontend`** and install again.
 
