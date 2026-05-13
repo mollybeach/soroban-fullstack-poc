@@ -279,6 +279,9 @@ export async function connectWalletConnectSession(): Promise<{
   });
   try {
     await openAppKitModalPreferringWideLayout(modal);
+    const { RouterController } = await import("@reown/appkit-controllers");
+    // Desktop would otherwise open the QR-first basic view; show the wallet grid first.
+    RouterController.reset("AllWallets");
     const session = await sessionPromise;
     if (!session) {
       throw new Error("WalletConnect session was not established");
