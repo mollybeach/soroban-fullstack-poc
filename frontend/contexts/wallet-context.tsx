@@ -14,6 +14,7 @@ import {
   disconnectStellarWalletsKit,
   ensureStellarWalletsKit,
   getWalletConnectProjectId,
+  isSwkAuthModalDismissed,
   KitEventType,
   openStellarWalletsKitAuth,
   StellarWalletsKit,
@@ -48,9 +49,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [publicKey]);
 
   const connectWallet = useCallback(async () => {
-    const { address } = await openStellarWalletsKitAuth();
-    setPublicKey(address);
-    setWalletMode("stellar-wallets-kit");
+    try {
+      const { address } = await openStellarWalletsKitAuth();
+      setPublicKey(address);
+      setWalletMode("stellar-wallets-kit");
+    } catch (e) {
+      if (isSwkAuthModalDismissed(e)) return;
+      throw e;
+    }
   }, []);
 
   const disconnect = useCallback(async () => {

@@ -4,12 +4,20 @@ import {
   WalletConnectModule,
   WalletConnectTargetChain,
 } from "@creit-tech/stellar-wallets-kit/modules/wallet-connect";
-import {
-  KitEventType,
-  Networks,
-  SwkAppDarkTheme,
-} from "@creit-tech/stellar-wallets-kit/types";
+import { KitEventType, Networks } from "@creit-tech/stellar-wallets-kit/types";
 import type { SorobanTransactionSigner } from "./wallet-types";
+import { swkitPocTheme } from "./swkit-poc-theme";
+
+/** Kit rejects with this when the user dismisses the auth modal (not a failure). */
+export function isSwkAuthModalDismissed(error: unknown): boolean {
+  if (error == null || typeof error !== "object") return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  if (typeof message !== "string") return false;
+  const m = message.trim().toLowerCase();
+  const isCloseCopy =
+    m === "the user closed the modal." || m.includes("closed the modal");
+  return code === -1 && isCloseCopy;
+}
 
 export function getWalletConnectProjectId(): string | null {
   const id = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim();
@@ -49,7 +57,7 @@ export async function ensureStellarWalletsKit(): Promise<void> {
     StellarWalletsKit.init({
       modules,
       network: Networks.TESTNET,
-      theme: SwkAppDarkTheme,
+      theme: swkitPocTheme,
     });
   })();
   await initPromise;
