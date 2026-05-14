@@ -20,6 +20,7 @@
     [],
     [],
     [],
+    [],
     []
   ],
   "ledger": {
@@ -61,9 +62,7 @@
                   ]
                 },
                 "durability": "persistent",
-                "val": {
-                  "address": "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF"
-                }
+                "val": "void"
               }
             },
             "ext": "v0"

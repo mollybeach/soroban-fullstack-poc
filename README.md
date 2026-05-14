@@ -129,8 +129,13 @@ The Soroban contract exposes small storage setters and getters for **indexer dem
 | `set_symbol(String)` / `get_symbol()` | `CodeSet { label }` (same string as input) |
 | `set_pointer(Option<Address>)` / `get_pointer()` | `PointerSet { who }` (same option as input) |
 | `set_i128(i128)` / `get_i128()` | `WideI128Set { v }` |
+| `set_vec_u32(Vec<u32>)` / `get_vec_u32()` | `VecU32Set { items }` (same vec as input) |
+| `set_scores(Map<String,u32>)` / `get_scores()` | `ScoresSet { scores }` (same map as input) |
+| `set_plain_addr(Address)` / `get_plain_addr()` | `PlainAddrSet { who }` (same address as input) |
+| `set_nested(OuterBits)` / `get_nested()` | `NestedSet { outer }` (same struct as input) |
+| `set_widget(DemoWidget)` / `get_widget()` | `WidgetSet { w }` (same enum as input) |
 
-**Event payload parity:** for **`BlobSet`**, **`CodeSet`**, and **`PointerSet`**, the event body mirrors the **function argument** (`data`, `label`, `who`) so listeners can test **invocation == event** the same way you often do on EVM. `BlobSet` is still capped at **64 bytes** so event + storage stay bounded.
+**Event payload parity:** for **`BlobSet`**, **`CodeSet`**, **`PointerSet`**, **`VecU32Set`**, **`ScoresSet`**, **`PlainAddrSet`**, **`NestedSet`**, and **`WidgetSet`**, the event body mirrors the **function argument** so listeners can test **invocation == event** the same way you often do on EVM. `BlobSet` is still capped at **64 bytes** so event + storage stay bounded.
 
 After changing the contract (entrypoints, events, or storage layout), **redeploy** wasm, set **`NEXT_PUBLIC_CONTRACT_ID`** to the **new** id, and run **`make contract-bindings`** so the checked-in **`frontend/contract-spec/basic-storage-interface.json`** and **`/bindings`** UI match the wasm you ship. Older contract instances keep their old event shapes forever.
 
@@ -315,6 +320,7 @@ The root **`Makefile`** prepends common install locations to **`PATH`** so **`ma
 1. Copy the line the script prints: **`CONTRACT_ID=C…`**.
 2. Set **`NEXT_PUBLIC_CONTRACT_ID`** in **`frontend/.env.local`** (local dev) and in **Vercel** (or whatever hosts the Next app) so reads/writes hit the new instance.
 3. If you changed Rust since the last check-in, run **`make contract-bindings`** from the repo root and commit the updated **`frontend/contract-spec/basic-storage-interface.json`** (and generated **`frontend/lib/basic-storage-bindings/`** if you version that tree). The **Interface** page (`/bindings`) always reflects that checked-in spec, not an arbitrary on-chain id.
+4. The deploy script writes **`frontend/contract-spec/poc-contract-deploy.meta.json`** (`contractId` + **`deployedAt`** in UTC). The **home** page shows **Deployed …** when that `contractId` matches **`NEXT_PUBLIC_CONTRACT_ID`**.
 
 ---
 

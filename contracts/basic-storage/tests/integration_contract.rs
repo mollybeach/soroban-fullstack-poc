@@ -1,8 +1,10 @@
 //! Integration-style tests: multi-step flows against the deployed contract type in a single `Env`.
 //! Complements unit tests in `src/test.rs` (separate test binary is the conventional Rust layout).
 
-use basic_storage::{BasicStorageContract, BasicStorageContractClient};
-use soroban_sdk::{Address, Bytes, Env, String, Symbol};
+use basic_storage::{
+    BasicStorageContract, BasicStorageContractClient, DemoWidget, InnerBits, OuterBits,
+};
+use soroban_sdk::{Address, Bytes, Env, Map, String, Symbol, Vec};
 
 #[test]
 fn integration_alternating_writes_read_as_last_value() {
@@ -55,6 +57,24 @@ fn integration_multi_slot_roundtrip_and_isolation() {
     );
     client.set_pointer(&Some(addr.clone()));
 
+    let mut list = Vec::new(&env);
+    list.push_back(1u32);
+    list.push_back(2u32);
+    client.set_vec_u32(&list);
+
+    let mut scores = Map::new(&env);
+    scores.set(String::from_str(&env, "x"), 10u32);
+    client.set_scores(&scores);
+
+    client.set_plain_addr(&contract_id.clone());
+
+    let outer = OuterBits {
+        inner: InnerBits { x: 3 },
+        stamp: 7,
+    };
+    client.set_nested(&outer);
+    client.set_widget(&DemoWidget::Pair(11u32, 12u32));
+
     assert_eq!(client.get(), 99);
     assert_eq!(client.get_signed(), -5);
     assert!(client.get_flag());
@@ -64,6 +84,11 @@ fn integration_multi_slot_roundtrip_and_isolation() {
     assert_eq!(client.get_blob(), blob);
     assert_eq!(client.get_symbol(), Symbol::new(&env, "POC"));
     assert_eq!(client.get_pointer(), Some(addr));
+    assert_eq!(client.get_vec_u32(), list);
+    assert_eq!(client.get_scores(), scores);
+    assert_eq!(client.get_plain_addr(), contract_id);
+    assert!(client.get_nested() == outer);
+    assert!(client.get_widget() == DemoWidget::Pair(11u32, 12u32));
 
     client.set(&100u32);
     assert_eq!(client.get(), 100);

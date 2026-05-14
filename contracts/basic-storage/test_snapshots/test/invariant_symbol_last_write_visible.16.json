@@ -10,9 +10,6 @@
     [],
     [],
     [],
-    [],
-    [],
-    [],
     []
   ],
   "ledger": {
@@ -55,7 +52,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "symbol": "type_x"
+                  "symbol": "a"
                 }
               }
             },

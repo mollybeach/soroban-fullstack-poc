@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-05-14T15:51:17.067Z",
+  "generatedAt": "2026-05-14T16:49:03.252Z",
   "success": true,
-  "pocContractId": "CBGXNCIFY3XQO2UDH3TMSTTMWJWVIFD4FPRHIYWLOYSKH3LBNQ3B6O2R",
+  "pocContractId": "CCLKUBBGR6TP2LNFWUYICL36D6ERZYNI7KDO6I75IDBCE7UDXIUWWW2W",
   "testScopeNote": "These rows come from `cargo test` in `contracts/basic-storage` (isolated Soroban `Env` per case). They do not hit testnet RPC. `pocContractId` is the demo contract id captured from `frontend/.env.local` when this JSON was generated.",
   "summary": {
-    "passed": 33,
+    "passed": 38,
     "failed": 0,
     "ignored": 0
   },
@@ -71,10 +71,10 @@
       "name": "Library tests",
       "path": "contracts/basic-storage/src/test.rs",
       "description": "Unit, property sweep, Proptest random cases, and several invariant checks (per-slot last-write and cross-slot isolation) in the library test module.",
-      "passed": 30,
+      "passed": 35,
       "failed": 0,
       "ok": true,
-      "tail": "test test::fuzz_set_get_random_u32 ... ok\n\ntest result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s",
+      "tail": "test test::fuzz_set_get_random_u32 ... ok\n\ntest result: ok. 35 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.28s",
       "tests": [
         {
           "id": "lib:test::get_returns_zero_before_first_set",
@@ -86,6 +86,15 @@
           "detail": "Fresh contract: `get()` returns 0 before any `set` (default storage)."
         },
         {
+          "id": "lib:test::invariant_blob_last_write_visible",
+          "name": "test::invariant_blob_last_write_visible",
+          "shortName": "invariant_blob_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: bounded random `Bytes` chunks; `get_blob` equals last write."
+        },
+        {
           "id": "lib:test::invariant_symbol_last_write_visible",
           "name": "test::invariant_symbol_last_write_visible",
           "shortName": "invariant_symbol_last_write_visible",
@@ -93,15 +102,6 @@
           "kindLabel": "Invariant",
           "outcome": "passed",
           "detail": "Proptest: ASCII label sequence via `set_symbol`; `get_symbol` matches last `Symbol`."
-        },
-        {
-          "id": "lib:test::invariant_pointer_optional_last_write_matches_sequence",
-          "name": "test::invariant_pointer_optional_last_write_matches_sequence",
-          "shortName": "invariant_pointer_optional_last_write_matches_sequence",
-          "kind": "invariant",
-          "kindLabel": "Invariant",
-          "outcome": "passed",
-          "detail": "Proptest: alternating Some/None `set_pointer`; final `get_pointer` matches last op."
         },
         {
           "id": "lib:test::invariant_i128_last_write_visible",
@@ -113,42 +113,6 @@
           "detail": "Proptest: random `i128` sequence; `get_i128` equals last write."
         },
         {
-          "id": "lib:test::invariant_blob_last_write_visible",
-          "name": "test::invariant_blob_last_write_visible",
-          "shortName": "invariant_blob_last_write_visible",
-          "kind": "invariant",
-          "kindLabel": "Invariant",
-          "outcome": "passed",
-          "detail": "Proptest: bounded random `Bytes` chunks; `get_blob` equals last write."
-        },
-        {
-          "id": "lib:test::invariant_i64_last_write_visible",
-          "name": "test::invariant_i64_last_write_visible",
-          "shortName": "invariant_i64_last_write_visible",
-          "kind": "invariant",
-          "kindLabel": "Invariant",
-          "outcome": "passed",
-          "detail": "Proptest: random `i64` sequence; `get_i64` equals last write."
-        },
-        {
-          "id": "lib:test::set_blob_get_roundtrip",
-          "name": "test::set_blob_get_roundtrip",
-          "shortName": "set_blob_get_roundtrip",
-          "kind": "unit",
-          "kindLabel": "Unit",
-          "outcome": "passed",
-          "detail": "`set_blob` / `get_blob` with short `Bytes` payload."
-        },
-        {
-          "id": "lib:test::set_counter_get_roundtrip",
-          "name": "test::set_counter_get_roundtrip",
-          "shortName": "set_counter_get_roundtrip",
-          "kind": "unit",
-          "kindLabel": "Unit",
-          "outcome": "passed",
-          "detail": "u64 counter path: `set_counter` / `get_counter`."
-        },
-        {
           "id": "lib:test::sequential_sets_overwrite_previous_value",
           "name": "test::sequential_sets_overwrite_previous_value",
           "shortName": "sequential_sets_overwrite_previous_value",
@@ -156,6 +120,15 @@
           "kindLabel": "Unit",
           "outcome": "passed",
           "detail": "Two writes in order; final `get` matches the last written value."
+        },
+        {
+          "id": "lib:test::invariant_pointer_optional_last_write_matches_sequence",
+          "name": "test::invariant_pointer_optional_last_write_matches_sequence",
+          "shortName": "invariant_pointer_optional_last_write_matches_sequence",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: alternating Some/None `set_pointer`; final `get_pointer` matches last op."
         },
         {
           "id": "lib:test::invariant_flag_last_write_visible_on_get_flag",
@@ -167,6 +140,24 @@
           "detail": "Proptest: random bool sequence on `set_flag`; `get_flag` equals last write."
         },
         {
+          "id": "lib:test::invariant_i64_last_write_visible",
+          "name": "test::invariant_i64_last_write_visible",
+          "shortName": "invariant_i64_last_write_visible",
+          "kind": "invariant",
+          "kindLabel": "Invariant",
+          "outcome": "passed",
+          "detail": "Proptest: random `i64` sequence; `get_i64` equals last write."
+        },
+        {
+          "id": "lib:test::set_counter_get_roundtrip",
+          "name": "test::set_counter_get_roundtrip",
+          "shortName": "set_counter_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "u64 counter path: `set_counter` / `get_counter`."
+        },
+        {
           "id": "lib:test::property_set_get_roundtrip_for_many_values",
           "name": "test::property_set_get_roundtrip_for_many_values",
           "shortName": "property_set_get_roundtrip_for_many_values",
@@ -176,13 +167,13 @@
           "detail": "Deterministic sweep: for each value in 0..100, `set` then `get` must match (property-style, fixed cases)."
         },
         {
-          "id": "lib:test::set_i64_get_roundtrip",
-          "name": "test::set_i64_get_roundtrip",
-          "shortName": "set_i64_get_roundtrip",
+          "id": "lib:test::set_blob_get_roundtrip",
+          "name": "test::set_blob_get_roundtrip",
+          "shortName": "set_blob_get_roundtrip",
           "kind": "unit",
           "kindLabel": "Unit",
           "outcome": "passed",
-          "detail": "`set_i64` / `get_i64` round-trip."
+          "detail": "`set_blob` / `get_blob` with short `Bytes` payload."
         },
         {
           "id": "lib:test::set_flag_get_roundtrip",
@@ -212,6 +203,33 @@
           "detail": "Boundary: stores and reads `u32::MAX` through the primary slot."
         },
         {
+          "id": "lib:test::set_i64_get_roundtrip",
+          "name": "test::set_i64_get_roundtrip",
+          "shortName": "set_i64_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_i64` / `get_i64` round-trip."
+        },
+        {
+          "id": "lib:test::set_plain_addr_get_roundtrip",
+          "name": "test::set_plain_addr_get_roundtrip",
+          "shortName": "set_plain_addr_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "Non-optional `Address`: default burned strkey before set; `set_plain_addr` / `get_plain_addr` with the contract id."
+        },
+        {
+          "id": "lib:test::set_nested_get_roundtrip",
+          "name": "test::set_nested_get_roundtrip",
+          "shortName": "set_nested_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "Nested `#[contracttype]` struct: `OuterBits` with `InnerBits` + `stamp` via `set_nested` / `get_nested`."
+        },
+        {
           "id": "lib:test::set_pointer_get_roundtrip",
           "name": "test::set_pointer_get_roundtrip",
           "shortName": "set_pointer_get_roundtrip",
@@ -228,6 +246,15 @@
           "kindLabel": "Unit",
           "outcome": "passed",
           "detail": "Signed i32 path: `set_signed` / `get_signed` round-trip (−17)."
+        },
+        {
+          "id": "lib:test::set_scores_get_roundtrip",
+          "name": "test::set_scores_get_roundtrip",
+          "shortName": "set_scores_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_scores` / `get_scores` with a small `Map<String, u32>` (string keys + u32 values)."
         },
         {
           "id": "lib:test::set_symbol_get_roundtrip",
@@ -264,6 +291,24 @@
           "kindLabel": "Unit",
           "outcome": "passed",
           "detail": "`set_u128` / `get_u128` wide integer round-trip."
+        },
+        {
+          "id": "lib:test::set_vec_u32_get_roundtrip",
+          "name": "test::set_vec_u32_get_roundtrip",
+          "shortName": "set_vec_u32_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "`set_vec_u32` / `get_vec_u32` with a short `Vec<u32>` (Soroban collection round-trip)."
+        },
+        {
+          "id": "lib:test::set_widget_get_roundtrip",
+          "name": "test::set_widget_get_roundtrip",
+          "shortName": "set_widget_get_roundtrip",
+          "kind": "unit",
+          "kindLabel": "Unit",
+          "outcome": "passed",
+          "detail": "User `#[contracttype]` enum: `DemoWidget` Off / On / Pair arms via `set_widget` / `get_widget`."
         },
         {
           "id": "lib:test::invariant_primary_unchanged_under_u128_only_writes",
@@ -356,17 +401,8 @@
       "passed": 3,
       "failed": 0,
       "ok": true,
-      "tail": "test integration_multi_slot_roundtrip_and_isolation ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+      "tail": "test integration_multi_slot_roundtrip_and_isolation ... ok\n\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s",
       "tests": [
-        {
-          "id": "integration:integration_alternating_writes_read_as_last_value",
-          "name": "integration_alternating_writes_read_as_last_value",
-          "shortName": "integration_alternating_writes_read_as_last_value",
-          "kind": "integration",
-          "kindLabel": "Integration",
-          "outcome": "passed",
-          "detail": "Integration binary: alternating `set` steps; `get` always reflects the latest write."
-        },
         {
           "id": "integration:integration_sequence_matches_property_last_write_wins",
           "name": "integration_sequence_matches_property_last_write_wins",
@@ -377,13 +413,22 @@
           "detail": "Integration binary: fixed sequence [7,14,21,42]; after each step `get` equals the value just set."
         },
         {
+          "id": "integration:integration_alternating_writes_read_as_last_value",
+          "name": "integration_alternating_writes_read_as_last_value",
+          "shortName": "integration_alternating_writes_read_as_last_value",
+          "kind": "integration",
+          "kindLabel": "Integration",
+          "outcome": "passed",
+          "detail": "Integration binary: alternating `set` steps; `get` always reflects the latest write."
+        },
+        {
           "id": "integration:integration_multi_slot_roundtrip_and_isolation",
           "name": "integration_multi_slot_roundtrip_and_isolation",
           "shortName": "integration_multi_slot_roundtrip_and_isolation",
           "kind": "integration",
           "kindLabel": "Integration",
           "outcome": "passed",
-          "detail": "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>; reads all back; then checks u32 update does not clobber i32 / i128."
+          "detail": "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>, Vec<u32>, Map, plain Address, nested struct, enum; reads all back; then checks u32 update does not clobber i32 / i128."
         }
       ]
     }

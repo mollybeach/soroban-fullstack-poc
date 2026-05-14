@@ -108,6 +108,36 @@
             "doc": "128-bit signed integer.",
             "name": "WideI128"
           }
+        },
+        {
+          "void_v0": {
+            "doc": "Bounded `Vec<u32>` (coverage for `Vec`).",
+            "name": "U32List"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Bounded `Map<String, u32>` (coverage for `Map`).",
+            "name": "Scores"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Non-optional `Address` (distinct from `Option<Address>` on the pointer slot).",
+            "name": "PlainAddr"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Nested struct slot.",
+            "name": "Nested"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Enum slot.",
+            "name": "Widget"
+          }
         }
       ]
     }
@@ -189,6 +219,90 @@
     }
   },
   {
+    "udt_struct_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "InnerBits",
+      "fields": [
+        {
+          "doc": "",
+          "name": "x",
+          "type_": "u32"
+        }
+      ]
+    }
+  },
+  {
+    "udt_struct_v0": {
+      "doc": "Nested `#[contracttype]` struct (coverage for composite UDT graphs).",
+      "lib": "",
+      "name": "OuterBits",
+      "fields": [
+        {
+          "doc": "",
+          "name": "inner",
+          "type_": {
+            "udt": {
+              "name": "InnerBits"
+            }
+          }
+        },
+        {
+          "doc": "",
+          "name": "stamp",
+          "type_": "u64"
+        }
+      ]
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Same `OuterBits` as `set_nested`.",
+      "lib": "",
+      "name": "NestedSet",
+      "prefix_topics": [
+        "nested_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "outer",
+          "type_": {
+            "udt": {
+              "name": "OuterBits"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Same `Map<String, u32>` as `set_scores`.",
+      "lib": "",
+      "name": "ScoresSet",
+      "prefix_topics": [
+        "scores_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "scores",
+          "type_": {
+            "map": {
+              "key_type": "string",
+              "value_type": "u32"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
     "event_v0": {
       "doc": "",
       "lib": "",
@@ -205,6 +319,83 @@
         }
       ],
       "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Same `Vec<u32>` as `set_vec_u32`.",
+      "lib": "",
+      "name": "VecU32Set",
+      "prefix_topics": [
+        "vec_u32_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "items",
+          "type_": {
+            "vec": {
+              "element_type": "u32"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Same `DemoWidget` as `set_widget`.",
+      "lib": "",
+      "name": "WidgetSet",
+      "prefix_topics": [
+        "widget_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "w",
+          "type_": {
+            "udt": {
+              "name": "DemoWidget"
+            }
+          },
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "udt_union_v0": {
+      "doc": "Small user enum stored on-chain (coverage for `#[contracttype]` enums).",
+      "lib": "",
+      "name": "DemoWidget",
+      "cases": [
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "Off"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "On"
+          }
+        },
+        {
+          "tuple_v0": {
+            "doc": "",
+            "name": "Pair",
+            "type_": [
+              "u32",
+              "u32"
+            ]
+          }
+        }
+      ]
     }
   },
   {
@@ -281,6 +472,25 @@
           "doc": "",
           "name": "v",
           "type_": "u128",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "Same `Address` as `set_plain_addr`.",
+      "lib": "",
+      "name": "PlainAddrSet",
+      "prefix_topics": [
+        "plain_addr_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "who",
+          "type_": "address",
           "location": "data"
         }
       ],
@@ -458,6 +668,35 @@
   {
     "function_v0": {
       "doc": "",
+      "name": "get_nested",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "OuterBits"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_scores",
+      "inputs": [],
+      "outputs": [
+        {
+          "map": {
+            "key_type": "string",
+            "value_type": "u32"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
       "name": "get_signed",
       "inputs": [],
       "outputs": [
@@ -473,6 +712,57 @@
       "outputs": [
         "symbol"
       ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_widget",
+      "inputs": [],
+      "outputs": [
+        {
+          "udt": {
+            "name": "DemoWidget"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_nested",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "outer",
+          "type_": {
+            "udt": {
+              "name": "OuterBits"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a bounded string-keyed map (coverage for `Map` + `String` keys).",
+      "name": "set_scores",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "scores",
+          "type_": {
+            "map": {
+              "key_type": "string",
+              "value_type": "u32"
+            }
+          }
+        }
+      ],
+      "outputs": []
     }
   },
   {
@@ -506,6 +796,24 @@
   {
     "function_v0": {
       "doc": "",
+      "name": "set_widget",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "w",
+          "type_": {
+            "udt": {
+              "name": "DemoWidget"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
       "name": "get_counter",
       "inputs": [],
       "outputs": [
@@ -522,6 +830,20 @@
         {
           "option": {
             "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_vec_u32",
+      "inputs": [],
+      "outputs": [
+        {
+          "vec": {
+            "element_type": "u32"
           }
         }
       ]
@@ -554,6 +876,48 @@
               "value_type": "address"
             }
           }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a bounded `Vec<u32>` (empty allowed).",
+      "name": "set_vec_u32",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "items",
+          "type_": {
+            "vec": {
+              "element_type": "u32"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_plain_addr",
+      "inputs": [],
+      "outputs": [
+        "address"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Non-optional `Address` (default read is the burned account when unset).",
+      "name": "set_plain_addr",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "who",
+          "type_": "address"
         }
       ],
       "outputs": []

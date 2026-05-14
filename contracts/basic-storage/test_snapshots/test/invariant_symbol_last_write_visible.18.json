@@ -9,6 +9,11 @@
     [],
     [],
     [],
+    [],
+    [],
+    [],
+    [],
+    [],
     []
   ],
   "ledger": {
@@ -51,7 +56,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "symbol": "ab"
+                  "symbol": "Z9"
                 }
               }
             },

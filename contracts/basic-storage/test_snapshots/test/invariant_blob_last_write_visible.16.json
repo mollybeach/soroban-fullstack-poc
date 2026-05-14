@@ -8,8 +8,6 @@
     [],
     [],
     [],
-    [],
-    [],
     []
   ],
   "ledger": {
@@ -52,7 +50,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "4687a351fe345d9b03b6cab7f91426f123"
+                  "bytes": "c0"
                 }
               }
             },

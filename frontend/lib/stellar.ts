@@ -34,6 +34,16 @@ type BasicStorageClient = Client & {
   set_pointer: (args: { who: string | null }) => Promise<AssembledTransaction<unknown>>;
   get_i128: () => Promise<AssembledTransaction<bigint | number | string>>;
   set_i128: (args: { v: bigint | number | string }) => Promise<AssembledTransaction<unknown>>;
+  get_vec_u32: () => Promise<AssembledTransaction<number[]>>;
+  set_vec_u32: (args: { items: number[] }) => Promise<AssembledTransaction<unknown>>;
+  get_scores: () => Promise<AssembledTransaction<Map<string, number>>>;
+  set_scores: (args: { scores: Map<string, number> }) => Promise<AssembledTransaction<unknown>>;
+  get_plain_addr: () => Promise<AssembledTransaction<string>>;
+  set_plain_addr: (args: { who: string }) => Promise<AssembledTransaction<unknown>>;
+  get_nested: () => Promise<AssembledTransaction<unknown>>;
+  set_nested: (args: { outer: unknown }) => Promise<AssembledTransaction<unknown>>;
+  get_widget: () => Promise<AssembledTransaction<unknown>>;
+  set_widget: (args: { w: unknown }) => Promise<AssembledTransaction<unknown>>;
 };
 
 export function getConfiguredContractId(): string {
@@ -97,6 +107,57 @@ function bigintishToBigInt(v: bigint | number | string): bigint {
   return BigInt(v as number);
 }
 
+/** Soroban `DemoWidget` as passed to `set_widget` (matches generated bindings). */
+export type DemoWidgetArg =
+  | { tag: "Off" }
+  | { tag: "On" }
+  | { tag: "Pair"; values: readonly [number, number] };
+
+const COVERAGE_EMPTY = {
+  hasCoverageTypesApi: false as boolean,
+  vecU32Json: null as string | null,
+  scoresJson: null as string | null,
+  plainAddrStr: null as string | null,
+  nestedSummary: null as string | null,
+  widgetLabel: null as string | null,
+};
+
+function scoresResultToJson(result: unknown): string {
+  if (result instanceof Map) {
+    const o = Object.fromEntries([...result.entries()].sort(([a], [b]) => a.localeCompare(b)));
+    return JSON.stringify(o);
+  }
+  if (result && typeof result === "object" && !Array.isArray(result)) {
+    const entries = Object.entries(result as Record<string, number>).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    return JSON.stringify(Object.fromEntries(entries));
+  }
+  return "{}";
+}
+
+function nestedResultToSummary(result: unknown): string {
+  if (!result || typeof result !== "object") return "";
+  const r = result as { inner?: { x?: number }; stamp?: bigint | number | string };
+  const x = r.inner?.x ?? 0;
+  const stamp =
+    r.stamp === undefined || r.stamp === null
+      ? "0"
+      : bigintishToBigInt(r.stamp as bigint | number | string).toString();
+  return `inner.x=${x}, stamp=${stamp}`;
+}
+
+function widgetResultToLabel(result: unknown): string {
+  if (!result || typeof result !== "object") return "";
+  const o = result as { tag?: string; values?: unknown };
+  if (o.tag === "Off") return "Off";
+  if (o.tag === "On") return "On";
+  if (o.tag === "Pair" && Array.isArray(o.values) && o.values.length >= 2) {
+    return `Pair(${String(o.values[0])},${String(o.values[1])})`;
+  }
+  return JSON.stringify(result);
+}
+
 export type ContractSnapshot = {
   u32: number;
   signed: number | null;
@@ -116,6 +177,13 @@ export type ContractSnapshot = {
   hasWideTypesApi: boolean;
   /** True when wasm includes Symbol / optional Address / i128 (`get_symbol` present). */
   hasFullTypesApi: boolean;
+  /** Vec / Map / plain Address / nested struct / enum (`get_vec_u32` present). */
+  hasCoverageTypesApi: boolean;
+  vecU32Json: string | null;
+  scoresJson: string | null;
+  plainAddrStr: string | null;
+  nestedSummary: string | null;
+  widgetLabel: string | null;
 };
 
 /**
@@ -150,6 +218,7 @@ export async function readContractSnapshot(): Promise<ContractSnapshot> {
       hasExtendedApi: false,
       hasWideTypesApi: false,
       hasFullTypesApi: false,
+      ...COVERAGE_EMPTY,
     };
   }
 
@@ -186,6 +255,7 @@ export async function readContractSnapshot(): Promise<ContractSnapshot> {
       i128Wide: null,
       hasWideTypesApi: false,
       hasFullTypesApi: false,
+      ...COVERAGE_EMPTY,
     };
   }
 
@@ -224,6 +294,7 @@ export async function readContractSnapshot(): Promise<ContractSnapshot> {
       pointerStr: null,
       i128Wide: null,
       hasFullTypesApi: false,
+      ...COVERAGE_EMPTY,
     };
   }
 
@@ -247,12 +318,46 @@ export async function readContractSnapshot(): Promise<ContractSnapshot> {
     ptrRaw === undefined || ptrRaw === null || ptrRaw === "" ? null : String(ptrRaw);
   const i128Wide = bigintishToBigInt(i128wTx.result as bigint | number | string);
 
-  return {
+  const fullBase = {
     ...wide8,
     symbolStr: sym,
     pointerStr,
     i128Wide,
-    hasFullTypesApi: true,
+    hasFullTypesApi: true as const,
+  };
+
+  if (!isClientFn(client, "get_vec_u32")) {
+    return { ...fullBase, ...COVERAGE_EMPTY };
+  }
+
+  const [vecTx, scoresTx, plainTx, nestTx, widTx] = await Promise.all([
+    client.get_vec_u32(),
+    client.get_scores(),
+    client.get_plain_addr(),
+    client.get_nested(),
+    client.get_widget(),
+  ]);
+
+  if (
+    vecTx.result === undefined ||
+    scoresTx.result === undefined ||
+    plainTx.result === undefined ||
+    nestTx.result === undefined ||
+    widTx.result === undefined
+  ) {
+    throw new Error("Simulation returned no result for coverage-type getters");
+  }
+
+  const vecArr = vecTx.result as number[];
+
+  return {
+    ...fullBase,
+    hasCoverageTypesApi: true,
+    vecU32Json: JSON.stringify(vecArr),
+    scoresJson: scoresResultToJson(scoresTx.result),
+    plainAddrStr: String(plainTx.result),
+    nestedSummary: nestedResultToSummary(nestTx.result),
+    widgetLabel: widgetResultToLabel(widTx.result),
   };
 }
 
@@ -284,6 +389,9 @@ const MISSING_WIDE_TYPES =
 const MISSING_FULL_TYPES =
   "This WASM predates Symbol / optional address / i128. Redeploy the latest `basic-storage` from this repo and update NEXT_PUBLIC_CONTRACT_ID.";
 
+const MISSING_COVERAGE_TYPES =
+  "This WASM predates Vec / Map / plain Address / nested struct / enum slots. Run `make contract-bindings` after `make deploy`, then set NEXT_PUBLIC_CONTRACT_ID to the new contract.";
+
 function requireExtendedWriter(
   client: BasicStorageClient,
   method: "set_signed" | "set_tag" | "set_counter",
@@ -308,6 +416,20 @@ function requireFullWriter(
 ): void {
   if (!isClientFn(client, method)) {
     throw new Error(MISSING_FULL_TYPES);
+  }
+}
+
+function requireCoverageWriter(
+  client: BasicStorageClient,
+  method:
+    | "set_vec_u32"
+    | "set_scores"
+    | "set_plain_addr"
+    | "set_nested"
+    | "set_widget",
+): void {
+  if (!isClientFn(client, method)) {
+    throw new Error(MISSING_COVERAGE_TYPES);
   }
 }
 
@@ -484,5 +606,156 @@ export async function writeI128Wide(
   const client = await writeClient(publicKey, signTransaction);
   requireFullWriter(client, "set_i128");
   const assembled = await client.set_i128({ v });
+  return assembled.signAndSend();
+}
+
+const MAX_VEC_U32_ITEMS = 16;
+const MAX_SCORE_MAP_ENTRIES = 8;
+const MAX_SCORE_KEY_LEN = 24;
+
+/** Parse comma-separated decimal u32 list (empty → []). At most 16 entries. */
+export function parseCommaSeparatedU32List(s: string): number[] {
+  const t = s.trim();
+  if (!t) return [];
+  const parts = t.split(",").map((x) => x.trim()).filter(Boolean);
+  if (parts.length > MAX_VEC_U32_ITEMS) {
+    throw new Error(`At most ${MAX_VEC_U32_ITEMS} u32 values`);
+  }
+  const out: number[] = [];
+  for (const part of parts) {
+    const n = Number(part);
+    if (!Number.isInteger(n) || n < 0 || n > 0xffff_ffff) {
+      throw new Error(`Invalid u32: ${part}`);
+    }
+    out.push(n);
+  }
+  return out;
+}
+
+/** Parse `a=1,b=2` style map (empty → empty map). */
+export function parseScoresKeyValueLine(s: string): Map<string, number> {
+  const m = new Map<string, number>();
+  const t = s.trim();
+  if (!t) return m;
+  for (const raw of t.split(",")) {
+    const seg = raw.trim();
+    if (!seg) continue;
+    const eq = seg.indexOf("=");
+    if (eq < 1) {
+      throw new Error(`Expected key=value segments, got: ${seg}`);
+    }
+    const key = seg.slice(0, eq).trim();
+    const val = Number(seg.slice(eq + 1).trim());
+    if (key.length === 0 || key.length > MAX_SCORE_KEY_LEN) {
+      throw new Error(`Key length must be 1..${MAX_SCORE_KEY_LEN}`);
+    }
+    if (!Number.isInteger(val) || val < 0 || val > 0xffff_ffff) {
+      throw new Error(`Invalid u32 for key ${JSON.stringify(key)}`);
+    }
+    m.set(key, val);
+  }
+  if (m.size > MAX_SCORE_MAP_ENTRIES) {
+    throw new Error(`At most ${MAX_SCORE_MAP_ENTRIES} entries`);
+  }
+  return m;
+}
+
+export async function writeVecU32(
+  items: number[],
+  publicKey: string,
+  signTransaction: SorobanTransactionSigner,
+) {
+  if (items.length > MAX_VEC_U32_ITEMS) {
+    throw new Error(`At most ${MAX_VEC_U32_ITEMS} u32 values`);
+  }
+  for (const n of items) {
+    if (!Number.isInteger(n) || n < 0 || n > 0xffff_ffff) {
+      throw new Error("Each item must be a u32 in range 0 .. 4294967295");
+    }
+  }
+  const client = await writeClient(publicKey, signTransaction);
+  requireCoverageWriter(client, "set_vec_u32");
+  const assembled = await client.set_vec_u32({ items });
+  return assembled.signAndSend();
+}
+
+export async function writeScores(
+  scores: Map<string, number>,
+  publicKey: string,
+  signTransaction: SorobanTransactionSigner,
+) {
+  if (scores.size > MAX_SCORE_MAP_ENTRIES) {
+    throw new Error(`At most ${MAX_SCORE_MAP_ENTRIES} map entries`);
+  }
+  for (const [k, v] of scores) {
+    if (k.length === 0 || k.length > MAX_SCORE_KEY_LEN) {
+      throw new Error(`Key length must be 1..${MAX_SCORE_KEY_LEN}`);
+    }
+    if (!Number.isInteger(v) || v < 0 || v > 0xffff_ffff) {
+      throw new Error(`Invalid u32 for key ${JSON.stringify(k)}`);
+    }
+  }
+  const client = await writeClient(publicKey, signTransaction);
+  requireCoverageWriter(client, "set_scores");
+  const assembled = await client.set_scores({ scores });
+  return assembled.signAndSend();
+}
+
+export async function writePlainAddr(
+  who: string,
+  publicKey: string,
+  signTransaction: SorobanTransactionSigner,
+) {
+  const t = who.trim();
+  if (!t) {
+    throw new Error("Plain address requires a non-empty G… or C… strkey");
+  }
+  const normalized = Address.fromString(t).toString();
+  const client = await writeClient(publicKey, signTransaction);
+  requireCoverageWriter(client, "set_plain_addr");
+  const assembled = await client.set_plain_addr({ who: normalized });
+  return assembled.signAndSend();
+}
+
+export async function writeNested(
+  innerX: number,
+  stamp: bigint,
+  publicKey: string,
+  signTransaction: SorobanTransactionSigner,
+) {
+  if (!Number.isInteger(innerX) || innerX < 0 || innerX > 0xffff_ffff) {
+    throw new Error("inner.x must be a u32 in range 0 .. 4294967295");
+  }
+  if (stamp < BigInt(0) || stamp > U64_MAX) {
+    throw new Error("stamp must be a u64 in range 0 .. 2^64-1");
+  }
+  const client = await writeClient(publicKey, signTransaction);
+  requireCoverageWriter(client, "set_nested");
+  const assembled = await client.set_nested({
+    outer: {
+      inner: { x: innerX },
+      stamp,
+    },
+  });
+  return assembled.signAndSend();
+}
+
+export async function writeWidget(
+  w: DemoWidgetArg,
+  publicKey: string,
+  signTransaction: SorobanTransactionSigner,
+) {
+  if (w.tag === "Pair") {
+    const [a, b] = w.values;
+    if (!Number.isInteger(a) || a < 0 || a > 0xffff_ffff) {
+      throw new Error("Pair left must be u32");
+    }
+    if (!Number.isInteger(b) || b < 0 || b > 0xffff_ffff) {
+      throw new Error("Pair right must be u32");
+    }
+  }
+  const client = await writeClient(publicKey, signTransaction);
+  requireCoverageWriter(client, "set_widget");
+  const assembled = await client.set_widget({ w });
   return assembled.signAndSend();
 }

@@ -1,8 +1,32 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractevent, contractimpl, contracttype, Address, Bytes, Env, String, Symbol,
+    contract, contractevent, contractimpl, contracttype, Address, Bytes, Env, Map, String, Symbol,
+    Vec,
 };
+
+#[contracttype]
+#[derive(Clone, PartialEq)]
+pub struct InnerBits {
+    pub x: u32,
+}
+
+/// Nested `#[contracttype]` struct (coverage for composite UDT graphs).
+#[contracttype]
+#[derive(Clone, PartialEq)]
+pub struct OuterBits {
+    pub inner: InnerBits,
+    pub stamp: u64,
+}
+
+/// Small user enum stored on-chain (coverage for `#[contracttype]` enums).
+#[contracttype]
+#[derive(Clone, PartialEq)]
+pub enum DemoWidget {
+    Off,
+    On,
+    Pair(u32, u32),
+}
 
 #[contracttype]
 #[derive(Clone)]
@@ -25,10 +49,38 @@ pub enum DataKey {
     Pointer,
     /// 128-bit signed integer.
     WideI128,
+    /// Bounded `Vec<u32>` (coverage for `Vec`).
+    U32List,
+    /// Bounded `Map<String, u32>` (coverage for `Map`).
+    Scores,
+    /// Non-optional `Address` (distinct from `Option<Address>` on the pointer slot).
+    PlainAddr,
+    /// Nested struct slot.
+    Nested,
+    /// Enum slot.
+    Widget,
 }
 
 /// Maximum bytes accepted by `set_blob` (keeps storage bounded).
 const MAX_BLOB_LEN: u32 = 64;
+
+const MAX_VEC_U32: u32 = 16;
+const MAX_MAP_ENTRIES: u32 = 8;
+const MAX_MAP_KEY_LEN: u32 = 24;
+
+fn default_burn_addr(env: &Env) -> Address {
+    Address::from_str(
+        env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    )
+}
+
+fn default_outer(_env: &Env) -> OuterBits {
+    OuterBits {
+        inner: InnerBits { x: 0 },
+        stamp: 0,
+    }
+}
 
 #[contractevent(data_format = "single-value")]
 #[derive(Clone)]
@@ -97,6 +149,41 @@ pub struct CodeSet {
 #[derive(Clone)]
 pub struct PointerSet {
     pub who: Option<Address>,
+}
+
+/// Same `Vec<u32>` as `set_vec_u32`.
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct VecU32Set {
+    pub items: Vec<u32>,
+}
+
+/// Same `Map<String, u32>` as `set_scores`.
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct ScoresSet {
+    pub scores: Map<String, u32>,
+}
+
+/// Same `Address` as `set_plain_addr`.
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct PlainAddrSet {
+    pub who: Address,
+}
+
+/// Same `OuterBits` as `set_nested`.
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct NestedSet {
+    pub outer: OuterBits,
+}
+
+/// Same `DemoWidget` as `set_widget`.
+#[contractevent(data_format = "single-value")]
+#[derive(Clone)]
+pub struct WidgetSet {
+    pub w: DemoWidget,
 }
 
 #[contract]
@@ -242,6 +329,89 @@ impl BasicStorageContract {
 
     pub fn get_i128(env: Env) -> i128 {
         env.storage().persistent().get(&DataKey::WideI128).unwrap_or(0)
+    }
+
+    /// Stores a bounded `Vec<u32>` (empty allowed).
+    pub fn set_vec_u32(env: Env, items: Vec<u32>) {
+        if items.len() > MAX_VEC_U32 {
+            panic!("vec too long");
+        }
+        env.storage().persistent().set(&DataKey::U32List, &items);
+        VecU32Set {
+            items: items.clone(),
+        }
+        .publish(&env);
+    }
+
+    pub fn get_vec_u32(env: Env) -> Vec<u32> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::U32List)
+            .unwrap_or_else(|| Vec::new(&env))
+    }
+
+    /// Stores a bounded string-keyed map (coverage for `Map` + `String` keys).
+    pub fn set_scores(env: Env, scores: Map<String, u32>) {
+        if scores.len() > MAX_MAP_ENTRIES {
+            panic!("map too large");
+        }
+        for (k, _v) in scores.iter() {
+            if k.len() == 0 || k.len() > MAX_MAP_KEY_LEN {
+                panic!("bad map key length");
+            }
+        }
+        env.storage().persistent().set(&DataKey::Scores, &scores);
+        ScoresSet {
+            scores: scores.clone(),
+        }
+        .publish(&env);
+    }
+
+    pub fn get_scores(env: Env) -> Map<String, u32> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Scores)
+            .unwrap_or_else(|| Map::new(&env))
+    }
+
+    /// Non-optional `Address` (default read is the burned account when unset).
+    pub fn set_plain_addr(env: Env, who: Address) {
+        env.storage().persistent().set(&DataKey::PlainAddr, &who);
+        PlainAddrSet { who: who.clone() }.publish(&env);
+    }
+
+    pub fn get_plain_addr(env: Env) -> Address {
+        env.storage()
+            .persistent()
+            .get(&DataKey::PlainAddr)
+            .unwrap_or_else(|| default_burn_addr(&env))
+    }
+
+    pub fn set_nested(env: Env, outer: OuterBits) {
+        env.storage().persistent().set(&DataKey::Nested, &outer);
+        NestedSet {
+            outer: outer.clone(),
+        }
+        .publish(&env);
+    }
+
+    pub fn get_nested(env: Env) -> OuterBits {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Nested)
+            .unwrap_or_else(|| default_outer(&env))
+    }
+
+    pub fn set_widget(env: Env, w: DemoWidget) {
+        env.storage().persistent().set(&DataKey::Widget, &w);
+        WidgetSet { w: w.clone() }.publish(&env);
+    }
+
+    pub fn get_widget(env: Env) -> DemoWidget {
+        env.storage()
+            .persistent()
+            .get(&DataKey::Widget)
+            .unwrap_or(DemoWidget::Off)
     }
 }
 

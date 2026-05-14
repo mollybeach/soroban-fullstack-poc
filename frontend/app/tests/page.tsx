@@ -145,7 +145,7 @@ const FALLBACK: TestResultsPayload = {
   generatedAt: new Date(0).toISOString(),
   success: true,
   pocContractId: null,
-  summary: { passed: 16, failed: 0, ignored: 0 },
+  summary: { passed: 38, failed: 0, ignored: 0 },
   categories: DEFAULT_CATEGORIES,
   externalRuns: [
     {
@@ -165,7 +165,7 @@ const FALLBACK: TestResultsPayload = {
       name: "Library tests",
       path: "contracts/basic-storage/src/test.rs",
       description: "Export test results to populate each row.",
-      passed: 14,
+      passed: 35,
       failed: 0,
       ok: true,
       tail: "",
@@ -176,7 +176,7 @@ const FALLBACK: TestResultsPayload = {
       name: "Integration tests",
       path: "contracts/basic-storage/tests/integration_contract.rs",
       description: "Multi-step flows.",
-      passed: 2,
+      passed: 3,
       failed: 0,
       ok: true,
       tail: "",

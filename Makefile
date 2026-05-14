@@ -105,7 +105,7 @@ lint: clippy ## Alias: cargo clippy -D warnings (POC deliverable naming)
 
 build-contract: ## Build Soroban WASM (stellar if installed, else cargo release for wasm32v1-none)
 	@if command -v stellar >/dev/null 2>&1; then \
-		cd "$(CONTRACT_DIR)" && stellar contract build; \
+		cd "$(CONTRACT_DIR)" && bash -c 'unset CARGO_TARGET_DIR; stellar contract build'; \
 	else \
 		echo "stellar: not in PATH — using cargo (install Stellar CLI for deploy: https://developers.stellar.org/docs/tools)" >&2; \
 		cd "$(CONTRACT_DIR)" && cargo build --target wasm32v1-none --release && \

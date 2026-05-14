@@ -35,3 +35,8 @@ CONTRACT_ID=$(stellar contract deploy \
   --network testnet)
 
 echo "CONTRACT_ID=$CONTRACT_ID"
+
+FRONTEND_SPEC="$REPO_ROOT/frontend/contract-spec/poc-contract-deploy.meta.json"
+mkdir -p "$(dirname "$FRONTEND_SPEC")"
+node -e "const fs=require('fs'); const p=process.argv[1]; const id=process.argv[2]; fs.writeFileSync(p, JSON.stringify({ contractId: id, deployedAt: new Date().toISOString() }, null, 2) + '\n');" "$FRONTEND_SPEC" "$CONTRACT_ID"
+echo "Wrote deploy metadata (contract id + deployedAt): $FRONTEND_SPEC"

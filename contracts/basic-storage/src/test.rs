@@ -2,7 +2,7 @@ extern crate std;
 
 use super::*;
 use proptest::prelude::*;
-use soroban_sdk::{Address, Bytes, Env, String, Symbol};
+use soroban_sdk::{Address, Bytes, Env, Map, String, Symbol, Vec};
 
 // --- Unit tests (getter / setter) ---
 
@@ -169,6 +169,78 @@ fn set_i128_get_roundtrip() {
     assert_eq!(client.get_i128(), i128::MIN);
     client.set_i128(&170141183460469231731687303715884105727i128);
     assert_eq!(client.get_i128(), i128::MAX);
+}
+
+#[test]
+fn set_vec_u32_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    assert_eq!(client.get_vec_u32().len(), 0u32);
+    let mut v = Vec::new(&env);
+    v.push_back(2);
+    v.push_back(3);
+    client.set_vec_u32(&v);
+    assert_eq!(client.get_vec_u32(), v);
+}
+
+#[test]
+fn set_scores_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    assert_eq!(client.get_scores().len(), 0u32);
+    let mut m = Map::new(&env);
+    m.set(String::from_str(&env, "a"), 1u32);
+    m.set(String::from_str(&env, "b"), 2u32);
+    client.set_scores(&m);
+    assert_eq!(client.get_scores(), m);
+}
+
+#[test]
+fn set_plain_addr_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    let burn = Address::from_str(
+        &env,
+        "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    );
+    assert_eq!(client.get_plain_addr(), burn);
+    let addr = contract_id.clone();
+    client.set_plain_addr(&addr);
+    assert_eq!(client.get_plain_addr(), addr);
+}
+
+#[test]
+fn set_nested_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    let outer = OuterBits {
+        inner: InnerBits { x: 7 },
+        stamp: 99,
+    };
+    client.set_nested(&outer);
+    let got = client.get_nested();
+    assert!(got == outer);
+}
+
+#[test]
+fn set_widget_get_roundtrip() {
+    let env = Env::default();
+    let contract_id = env.register(BasicStorageContract, ());
+    let client = BasicStorageContractClient::new(&env, &contract_id);
+
+    assert!(client.get_widget() == DemoWidget::Off);
+    client.set_widget(&DemoWidget::On);
+    assert!(client.get_widget() == DemoWidget::On);
+    client.set_widget(&DemoWidget::Pair(4u32, 5u32));
+    assert!(client.get_widget() == DemoWidget::Pair(4u32, 5u32));
 }
 
 #[test]

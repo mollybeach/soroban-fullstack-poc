@@ -9,6 +9,8 @@
     [],
     [],
     [],
+    [],
+    [],
     []
   ],
   "ledger": {
@@ -51,7 +53,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "symbol": "POC"
+                  "symbol": "type_x"
                 }
               }
             },

@@ -12,6 +12,7 @@ import {
 import {
   Binary,
   ClipboardCopy,
+  Clock,
   Download,
   ExternalLink,
   FileCode,
@@ -38,13 +39,22 @@ import {
   writeSymbol,
   writePointer,
   writeI128Wide,
+  writeVecU32,
+  writeScores,
+  writePlainAddr,
+  writeNested,
+  writeWidget,
+  parseCommaSeparatedU32List,
+  parseScoresKeyValueLine,
   utf8ToBytes,
   getConfiguredContractId,
   getOptionalContractId,
   stellarExpertContractUrl,
+  type DemoWidgetArg,
 } from "@/lib/stellar";
 import { useWallet } from "@/contexts/wallet-context";
 import { formatUnknownError } from "@/lib/format-unknown-error";
+import pocDeployMeta from "@/contract-spec/poc-contract-deploy.meta.json";
 
 type LogLevel = "info" | "warn" | "ok" | "error";
 
@@ -296,6 +306,106 @@ const SLOT_THEME = {
       "w-full min-w-0 max-w-full rounded-lg border border-pink-200 bg-white px-2.5 py-1.5 text-sm leading-tight text-slate-900 shadow-inner outline-none transition focus:border-pink-500 focus:ring-2 focus:ring-pink-200 disabled:bg-slate-100 disabled:text-slate-500",
     writeBtn: `${btnWrite} bg-gradient-to-r from-pink-600 to-rose-600 shadow-pink-300/45`,
   },
+  vec: {
+    docCode: "rounded bg-lime-100 px-1.5 py-0.5 text-sm text-lime-950",
+    readCard:
+      "min-w-0 flex flex-col gap-0.5 rounded-lg border border-lime-200/90 border-l-[3px] border-l-lime-600 bg-gradient-to-br from-lime-50/95 via-white to-green-50/30 px-2 py-1.5 shadow-sm ring-1 ring-lime-100/70",
+    readSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-lime-950 sm:text-lg",
+    readMetaLabel:
+      "min-w-0 max-w-[45%] shrink-0 truncate text-[11px] font-medium leading-snug text-slate-600",
+    readMetaValue: readGetValueScroll,
+    readMetaValueWide: readGetValueScroll,
+    writeForm:
+      "min-w-0 flex flex-col gap-1.5 rounded-xl border border-lime-200/90 bg-gradient-to-br from-lime-50/70 to-white px-2.5 py-2 h-full",
+    writeSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-lime-950 sm:text-lg",
+    writeLabel:
+      "flex w-full min-w-0 flex-1 flex-col gap-1 text-[11px] font-medium leading-snug text-slate-600",
+    writeInputWide:
+      "w-full min-w-0 max-w-full rounded-lg border border-lime-200 bg-white px-2.5 py-1.5 font-mono text-xs leading-tight text-slate-900 shadow-inner outline-none transition focus:border-lime-500 focus:ring-2 focus:ring-lime-200 disabled:bg-slate-100 disabled:text-slate-500",
+    writeBtn: `${btnWrite} bg-gradient-to-r from-lime-600 to-green-600 shadow-lime-300/45`,
+  },
+  scores: {
+    docCode: "rounded bg-cyan-100 px-1.5 py-0.5 text-sm text-cyan-950",
+    readCard:
+      "min-w-0 flex flex-col gap-0.5 rounded-lg border border-cyan-200/90 border-l-[3px] border-l-cyan-600 bg-gradient-to-br from-cyan-50/95 via-white to-sky-50/30 px-2 py-1.5 shadow-sm ring-1 ring-cyan-100/70",
+    readSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-cyan-950 sm:text-lg",
+    readMetaLabel:
+      "min-w-0 max-w-[45%] shrink-0 truncate text-[11px] font-medium leading-snug text-slate-600",
+    readMetaValue: readGetValueScroll,
+    readMetaValueWide: readGetValueScroll,
+    writeForm:
+      "min-w-0 flex flex-col gap-1.5 rounded-xl border border-cyan-200/90 bg-gradient-to-br from-cyan-50/70 to-white px-2.5 py-2 h-full",
+    writeSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-cyan-950 sm:text-lg",
+    writeLabel:
+      "flex w-full min-w-0 flex-1 flex-col gap-1 text-[11px] font-medium leading-snug text-slate-600",
+    writeInputWide:
+      "w-full min-w-0 max-w-full rounded-lg border border-cyan-200 bg-white px-2.5 py-1.5 font-mono text-xs leading-tight text-slate-900 shadow-inner outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 disabled:bg-slate-100 disabled:text-slate-500",
+    writeBtn: `${btnWrite} bg-gradient-to-r from-cyan-600 to-sky-600 shadow-cyan-300/45`,
+  },
+  plain: {
+    docCode: "rounded bg-slate-200 px-1.5 py-0.5 text-sm text-slate-900",
+    readCard:
+      "min-w-0 flex flex-col gap-0.5 rounded-lg border border-slate-300/90 border-l-[3px] border-l-slate-600 bg-gradient-to-br from-slate-50/95 via-white to-zinc-50/30 px-2 py-1.5 shadow-sm ring-1 ring-slate-100/70",
+    readSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-slate-900 sm:text-lg",
+    readMetaLabel:
+      "min-w-0 max-w-[45%] shrink-0 truncate text-[11px] font-medium leading-snug text-slate-600",
+    readMetaValue: readGetValueScroll,
+    readMetaValueWide: readGetValueScroll,
+    writeForm:
+      "min-w-0 flex flex-col gap-1.5 rounded-xl border border-slate-300/90 bg-gradient-to-br from-slate-50/70 to-white px-2.5 py-2 h-full",
+    writeSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-slate-900 sm:text-lg",
+    writeLabel:
+      "flex w-full min-w-0 flex-1 flex-col gap-1 text-[11px] font-medium leading-snug text-slate-600",
+    writeInputWide:
+      "w-full min-w-0 max-w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 font-mono text-xs leading-tight text-slate-900 shadow-inner outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100 disabled:text-slate-500",
+    writeBtn: `${btnWrite} bg-gradient-to-r from-slate-600 to-zinc-600 shadow-slate-300/45`,
+  },
+  nested: {
+    docCode: "rounded bg-violet-200 px-1.5 py-0.5 text-sm text-violet-950",
+    readCard:
+      "min-w-0 flex flex-col gap-0.5 rounded-lg border border-violet-300/90 border-l-[3px] border-l-violet-700 bg-gradient-to-br from-violet-100/90 via-white to-fuchsia-50/25 px-2 py-1.5 shadow-sm ring-1 ring-violet-100/70",
+    readSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-violet-950 sm:text-lg",
+    readMetaLabel:
+      "min-w-0 max-w-[45%] shrink-0 truncate text-[11px] font-medium leading-snug text-slate-600",
+    readMetaValue: readGetValueScroll,
+    readMetaValueWide: readGetValueScroll,
+    writeForm:
+      "min-w-0 flex flex-col gap-1.5 rounded-xl border border-violet-300/90 bg-gradient-to-br from-violet-100/60 to-white px-2.5 py-2 h-full",
+    writeSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-violet-950 sm:text-lg",
+    writeLabel:
+      "flex w-full min-w-0 flex-1 flex-col gap-1 text-[11px] font-medium leading-snug text-slate-600",
+    writeInput:
+      "w-full min-w-0 max-w-full rounded-lg border border-violet-300 bg-white px-2.5 py-1.5 text-sm leading-tight text-slate-900 shadow-inner outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-200 disabled:bg-slate-100 disabled:text-slate-500",
+    writeBtn: `${btnWrite} bg-gradient-to-r from-violet-700 to-fuchsia-700 shadow-violet-300/45`,
+  },
+  widget: {
+    docCode: "rounded bg-amber-200 px-1.5 py-0.5 text-sm text-amber-950",
+    readCard:
+      "min-w-0 flex flex-col gap-0.5 rounded-lg border border-amber-300/90 border-l-[3px] border-l-amber-600 bg-gradient-to-br from-amber-50/95 via-white to-orange-50/30 px-2 py-1.5 shadow-sm ring-1 ring-amber-100/70",
+    readSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-amber-950 sm:text-lg",
+    readMetaLabel:
+      "min-w-0 max-w-[45%] shrink-0 truncate text-[11px] font-medium leading-snug text-slate-600",
+    readMetaValue: readGetValueScroll,
+    readMetaValueWide: readGetValueScroll,
+    writeForm:
+      "min-w-0 flex flex-col gap-1.5 rounded-xl border border-amber-300/90 bg-gradient-to-br from-amber-50/70 to-white px-2.5 py-2 h-full",
+    writeSetTitle:
+      "text-[1.05rem] font-bold leading-tight tracking-tight text-amber-950 sm:text-lg",
+    writeLabel:
+      "flex w-full min-w-0 flex-1 flex-col gap-1 text-[11px] font-medium leading-snug text-slate-600",
+    writeInput:
+      "w-full min-w-0 max-w-full rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-sm leading-tight text-slate-900 shadow-inner outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-200 disabled:bg-slate-100 disabled:text-slate-500",
+    writeBtn: `${btnWrite} bg-gradient-to-r from-amber-600 to-orange-600 shadow-amber-300/45`,
+  },
 } as const;
 
 type ReadSlotKey = keyof typeof SLOT_THEME;
@@ -337,6 +447,14 @@ type DemoWritePreset = {
   symbol: string;
   pointer: string;
   i128Wide: string;
+  vecU32?: string;
+  scores?: string;
+  plainAddr?: string;
+  nestedInnerX?: string;
+  nestedStamp?: string;
+  widgetKind?: "off" | "on" | "pair";
+  widgetPairA?: string;
+  widgetPairB?: string;
 };
 
 const DEMO_WRITE_PRESETS: DemoWritePreset[] = [
@@ -353,6 +471,14 @@ const DEMO_WRITE_PRESETS: DemoWritePreset[] = [
     symbol: "POC",
     pointer: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
     i128Wide: "-9876543210000000000000000000",
+    vecU32: "2,3,5,7",
+    scores: "slot_a=10,slot_b=20",
+    plainAddr: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    nestedInnerX: "7",
+    nestedStamp: "99",
+    widgetKind: "pair",
+    widgetPairA: "11",
+    widgetPairB: "12",
   },
   {
     name: "Zeroed",
@@ -524,6 +650,16 @@ export default function HomePage() {
   const [symbolInput, setSymbolInput] = useState("POC");
   const [pointerInput, setPointerInput] = useState("");
   const [i128WideInput, setI128WideInput] = useState("0");
+  const [vecU32Input, setVecU32Input] = useState("1,2,3");
+  const [scoresInput, setScoresInput] = useState("alpha=1");
+  const [plainAddrWriteInput, setPlainAddrWriteInput] = useState(
+    "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+  );
+  const [nestedInnerXInput, setNestedInnerXInput] = useState("0");
+  const [nestedStampInput, setNestedStampInput] = useState("0");
+  const [widgetKindInput, setWidgetKindInput] = useState<"off" | "on" | "pair">("off");
+  const [widgetPairAInput, setWidgetPairAInput] = useState("1");
+  const [widgetPairBInput, setWidgetPairBInput] = useState("2");
   const [storedFlag, setStoredFlag] = useState<boolean | null>(null);
   const [storedI64, setStoredI64] = useState<string | null>(null);
   const [storedBlobB64, setStoredBlobB64] = useState<string | null>(null);
@@ -531,11 +667,17 @@ export default function HomePage() {
   const [storedSymbol, setStoredSymbol] = useState<string | null>(null);
   const [storedPointer, setStoredPointer] = useState<string | null>(null);
   const [storedI128Wide, setStoredI128Wide] = useState<string | null>(null);
+  const [storedVecJson, setStoredVecJson] = useState<string | null>(null);
+  const [storedScoresJson, setStoredScoresJson] = useState<string | null>(null);
+  const [storedPlainAddr, setStoredPlainAddr] = useState<string | null>(null);
+  const [storedNestedSummary, setStoredNestedSummary] = useState<string | null>(null);
+  const [storedWidgetLabel, setStoredWidgetLabel] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   /** `null` until first successful read; then matches on-chain WASM. */
   const [hasExtendedApi, setHasExtendedApi] = useState<boolean | null>(null);
   const [hasWideTypesApi, setHasWideTypesApi] = useState<boolean | null>(null);
   const [hasFullTypesApi, setHasFullTypesApi] = useState<boolean | null>(null);
+  const [hasCoverageTypesApi, setHasCoverageTypesApi] = useState<boolean | null>(null);
   /** Prevents overlapping submits that reuse the same account sequence (common cause of txBadSeq). */
   const [writePending, setWritePending] = useState(false);
   /** Incremented after a successful write + refresh so the matching Get tile replays a short cue. */
@@ -605,6 +747,20 @@ export default function HomePage() {
       setHasExtendedApi(snap.hasExtendedApi);
       setHasWideTypesApi(snap.hasWideTypesApi);
       setHasFullTypesApi(snap.hasFullTypesApi);
+      setHasCoverageTypesApi(snap.hasCoverageTypesApi);
+      if (snap.hasCoverageTypesApi) {
+        setStoredVecJson(snap.vecU32Json);
+        setStoredScoresJson(snap.scoresJson);
+        setStoredPlainAddr(snap.plainAddrStr);
+        setStoredNestedSummary(snap.nestedSummary);
+        setStoredWidgetLabel(snap.widgetLabel);
+      } else {
+        setStoredVecJson(null);
+        setStoredScoresJson(null);
+        setStoredPlainAddr(null);
+        setStoredNestedSummary(null);
+        setStoredWidgetLabel(null);
+      }
       if (snap.hasExtendedApi) {
         setStoredSigned(snap.signed);
         setStoredTag(snap.tag);
@@ -622,6 +778,17 @@ export default function HomePage() {
               "ok",
               `reads → u32=${snap.u32}, i32=${snap.signed}, tag=${JSON.stringify(snap.tag)}, u64=${snap.counter!.toString()}, flag=${snap.flag}, i64=${snap.i64Val!.toString()}, blobB64=${snap.blobB64 ?? ""}, u128=${snap.u128Val!.toString()}, symbol=${JSON.stringify(snap.symbolStr)}, pointer=${snap.pointerStr ?? "null"}, i128Wide=${snap.i128Wide!.toString()}`,
             );
+            if (snap.hasCoverageTypesApi) {
+              appendLog(
+                "ok",
+                `coverage → vec=${snap.vecU32Json}, scores=${snap.scoresJson}, plain=${snap.plainAddrStr}, nested=${snap.nestedSummary}, widget=${snap.widgetLabel}`,
+              );
+            } else {
+              appendLog(
+                "info",
+                "Redeploy wasm for Vec / Map / plain Address / nested struct / enum (`get_vec_u32` …).",
+              );
+            }
           } else {
             setStoredSymbol(null);
             setStoredPointer(null);
@@ -684,9 +851,15 @@ export default function HomePage() {
       setStoredSymbol(null);
       setStoredPointer(null);
       setStoredI128Wide(null);
+      setStoredVecJson(null);
+      setStoredScoresJson(null);
+      setStoredPlainAddr(null);
+      setStoredNestedSummary(null);
+      setStoredWidgetLabel(null);
       setHasExtendedApi(null);
       setHasWideTypesApi(null);
       setHasFullTypesApi(null);
+      setHasCoverageTypesApi(null);
       const msg = formatUnknownError(e);
       setStatus(msg);
       appendLog("error", `read failed: ${msg}`);
@@ -1126,6 +1299,181 @@ export default function HomePage() {
     }
   }
 
+  async function onSubmitVecU32(e: FormEvent) {
+    e.preventDefault();
+    if (writeInFlightRef.current) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
+    let items: number[];
+    try {
+      items = parseCommaSeparatedU32List(vecU32Input);
+    } catch (err) {
+      appendLog("warn", formatUnknownError(err));
+      return;
+    }
+    writeInFlightRef.current = true;
+    setWritePending(true);
+    setStatus("Signing set_vec_u32…");
+    appendLog("info", `set_vec_u32(${JSON.stringify(items)}): awaiting wallet…`);
+    try {
+      const sent = await writeVecU32(items, pk, signTx);
+      appendLog("ok", `set_vec_u32 submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      bumpReadSlotPulse("vec");
+      setStatus("set_vec_u32 submitted.");
+    } catch (err) {
+      const msg = formatUnknownError(err);
+      setStatus(msg);
+      appendLog("error", `set_vec_u32 failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
+    }
+  }
+
+  async function onSubmitScores(e: FormEvent) {
+    e.preventDefault();
+    if (writeInFlightRef.current) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
+    let scores: Map<string, number>;
+    try {
+      scores = parseScoresKeyValueLine(scoresInput);
+    } catch (err) {
+      appendLog("warn", formatUnknownError(err));
+      return;
+    }
+    writeInFlightRef.current = true;
+    setWritePending(true);
+    setStatus("Signing set_scores…");
+    appendLog("info", `set_scores(${scores.size} keys): awaiting wallet…`);
+    try {
+      const sent = await writeScores(scores, pk, signTx);
+      appendLog("ok", `set_scores submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      bumpReadSlotPulse("scores");
+      setStatus("set_scores submitted.");
+    } catch (err) {
+      const msg = formatUnknownError(err);
+      setStatus(msg);
+      appendLog("error", `set_scores failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
+    }
+  }
+
+  async function onSubmitPlainAddr(e: FormEvent) {
+    e.preventDefault();
+    if (writeInFlightRef.current) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
+    writeInFlightRef.current = true;
+    setWritePending(true);
+    setStatus("Signing set_plain_addr…");
+    appendLog("info", "set_plain_addr: awaiting wallet…");
+    try {
+      const sent = await writePlainAddr(plainAddrWriteInput, pk, signTx);
+      appendLog("ok", `set_plain_addr submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      bumpReadSlotPulse("plain");
+      setStatus("set_plain_addr submitted.");
+    } catch (err) {
+      const msg = formatUnknownError(err);
+      setStatus(msg);
+      appendLog("error", `set_plain_addr failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
+    }
+  }
+
+  async function onSubmitNested(e: FormEvent) {
+    e.preventDefault();
+    if (writeInFlightRef.current) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
+    const xi = Number(nestedInnerXInput.trim());
+    if (!Number.isInteger(xi) || xi < 0 || xi > 0xffff_ffff) {
+      appendLog("warn", "inner.x must be a u32.");
+      return;
+    }
+    let stamp: bigint;
+    try {
+      stamp = BigInt(nestedStampInput.trim() || "0");
+    } catch {
+      appendLog("warn", "stamp must be a u64 decimal.");
+      return;
+    }
+    writeInFlightRef.current = true;
+    setWritePending(true);
+    setStatus("Signing set_nested…");
+    appendLog("info", `set_nested(inner.x=${xi}, stamp=${stamp}): awaiting wallet…`);
+    try {
+      const sent = await writeNested(xi, stamp, pk, signTx);
+      appendLog("ok", `set_nested submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      bumpReadSlotPulse("nested");
+      setStatus("set_nested submitted.");
+    } catch (err) {
+      const msg = formatUnknownError(err);
+      setStatus(msg);
+      appendLog("error", `set_nested failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
+    }
+  }
+
+  async function onSubmitWidget(e: FormEvent) {
+    e.preventDefault();
+    if (writeInFlightRef.current) return;
+    const w = await requireWallet();
+    if (!w) return;
+    const { publicKey: pk, signTransaction: signTx } = w;
+    let arg: DemoWidgetArg;
+    if (widgetKindInput === "off") {
+      arg = { tag: "Off" };
+    } else if (widgetKindInput === "on") {
+      arg = { tag: "On" };
+    } else {
+      const a = Number(widgetPairAInput.trim());
+      const b = Number(widgetPairBInput.trim());
+      if (!Number.isInteger(a) || !Number.isInteger(b)) {
+        appendLog("warn", "Pair mode needs two integer u32 values.");
+        return;
+      }
+      arg = { tag: "Pair", values: [a, b] as const };
+    }
+    writeInFlightRef.current = true;
+    setWritePending(true);
+    setStatus("Signing set_widget…");
+    appendLog("info", `set_widget(${JSON.stringify(arg)}): awaiting wallet…`);
+    try {
+      const sent = await writeWidget(arg, pk, signTx);
+      appendLog("ok", `set_widget submitted. Result: ${String(sent.result)}`);
+      await refresh();
+      bumpReadSlotPulse("widget");
+      setStatus("set_widget submitted.");
+    } catch (err) {
+      const msg = formatUnknownError(err);
+      setStatus(msg);
+      appendLog("error", `set_widget failed: ${msg}`);
+      appendBadSeqHintIfNeeded(err);
+    } finally {
+      writeInFlightRef.current = false;
+      setWritePending(false);
+    }
+  }
+
   let contractPreview: string;
   try {
     contractPreview = getConfiguredContractId();
@@ -1137,6 +1485,22 @@ export default function HomePage() {
   const explorerUrl = optionalId
     ? stellarExpertContractUrl(optionalId)
     : null;
+
+  const deployMeta = pocDeployMeta as { contractId?: string; deployedAt?: string };
+  const deployMetaMatches =
+    Boolean(optionalId) &&
+    typeof deployMeta.contractId === "string" &&
+    deployMeta.contractId.length > 0 &&
+    optionalId === deployMeta.contractId &&
+    typeof deployMeta.deployedAt === "string" &&
+    deployMeta.deployedAt.length > 0;
+  const deployedAtLabel = (() => {
+    if (!deployMetaMatches || !deployMeta.deployedAt) return null;
+    const d = new Date(deployMeta.deployedAt);
+    return Number.isNaN(d.getTime())
+      ? null
+      : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  })();
 
   const readDisplay = (v: string | number | null) =>
     loadingRead ? "…" : v === null ? "—" : String(v);
@@ -1150,8 +1514,9 @@ export default function HomePage() {
     if (hasExtendedApi) n += 3;
     if (hasWideTypesApi) n += 4;
     if (hasFullTypesApi) n += 3;
+    if (hasCoverageTypesApi) n += 5;
     return n;
-  }, [hasExtendedApi, hasWideTypesApi, hasFullTypesApi]);
+  }, [hasExtendedApi, hasWideTypesApi, hasFullTypesApi, hasCoverageTypesApi]);
 
   const logMessageColor = (level: LogLevel) => {
     switch (level) {
@@ -1264,6 +1629,21 @@ export default function HomePage() {
         </div>
       ) : null}
 
+      {hasFullTypesApi === true && hasCoverageTypesApi === false ? (
+        <div
+          className="rounded-2xl border border-lime-200 bg-lime-50/90 px-4 py-3 text-sm text-lime-950"
+          role="status"
+        >
+          This wasm has Symbol / pointer / i128 but not the latest{" "}
+          <code className="rounded bg-lime-100 px-1">Vec</code>,{" "}
+          <code className="rounded bg-lime-100 px-1">Map</code>, plain{" "}
+          <code className="rounded bg-lime-100 px-1">Address</code>, nested struct, or enum slots. Redeploy{" "}
+          <code className="rounded bg-lime-100 px-1">basic-storage</code> from this repo, run{" "}
+          <code className="rounded bg-lime-100 px-1">make contract-bindings</code>, and point{" "}
+          <code className="rounded bg-lime-100 px-1">NEXT_PUBLIC_CONTRACT_ID</code> at the new contract.
+        </div>
+      ) : null}
+
       {hasWideTypesApi === true && hasFullTypesApi === false ? (
         <div
           className="rounded-2xl border border-indigo-200 bg-indigo-50/90 px-4 py-3 text-sm text-indigo-950"
@@ -1295,7 +1675,7 @@ export default function HomePage() {
         </div>
       ) : null}
 
-      <div className="grid min-h-0 min-w-0 grid-cols-1 gap-4 md:h-[min(110rem,calc(100dvh-5rem))] md:grid-cols-2 md:grid-rows-[minmax(0,1fr)_minmax(0,2.1fr)] md:gap-4">
+      <div className="grid min-h-0 min-w-0 grid-cols-1 gap-4 md:h-[min(140rem,calc(100dvh-5rem))] md:grid-cols-2 md:grid-rows-[minmax(0,1fr)_minmax(0,2.1fr)] md:gap-4">
         <div className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-violet-100 bg-white/90 shadow-lg shadow-violet-100/50 backdrop-blur-sm">
           <div className="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
             <h1 className="text-2xl font-bold tracking-tight text-violet-950 sm:text-3xl">
@@ -1317,6 +1697,15 @@ export default function HomePage() {
               <code className={SLOT_THEME.symbol.docCode}>CodeSet</code>,{" "}
               <code className={SLOT_THEME.pointer.docCode}>PointerSet</code>,{" "}
               <code className={SLOT_THEME.i128.docCode}>WideI128Set</code>
+              {hasCoverageTypesApi === true ? (
+                <>
+                  , <code className={SLOT_THEME.vec.docCode}>VecU32Set</code>,{" "}
+                  <code className={SLOT_THEME.scores.docCode}>ScoresSet</code>,{" "}
+                  <code className={SLOT_THEME.plain.docCode}>PlainAddrSet</code>,{" "}
+                  <code className={SLOT_THEME.nested.docCode}>NestedSet</code>,{" "}
+                  <code className={SLOT_THEME.widget.docCode}>WidgetSet</code>
+                </>
+              ) : null}
               ). Stored values (this grid, top right) still work without a wallet (RPC simulation only).
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1343,6 +1732,23 @@ export default function HomePage() {
                 </code>
               )}
             </div>
+            {optionalId && deployedAtLabel ? (
+              <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
+                <span className="font-semibold text-violet-900">Deployed</span>
+                <time className="tabular-nums text-slate-700" dateTime={deployMeta.deployedAt}>
+                  {deployedAtLabel} EST
+                </time>
+              </p>
+            ) : optionalId && !deployedAtLabel ? (
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                <Clock className="mr-1 inline h-3.5 w-3.5 shrink-0 text-violet-500 align-text-bottom" aria-hidden />
+                Deploy time shows when{" "}
+                <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">frontend/contract-spec/poc-contract-deploy.meta.json</code> lists this
+                contract id and a <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">deployedAt</code> (run{" "}
+                <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[11px]">make deploy</code> from the repo root, then commit the updated meta file if you want it in git).
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -1540,6 +1946,75 @@ export default function HomePage() {
                 </div>
               </ReadGetSlotPulseWrap>
             </li>
+            {hasCoverageTypesApi === true ? (
+              <>
+            <li className={SLOT_THEME.vec.readCard}>
+              <ReadGetSlotPulseWrap pulseGen={readSlotPulseGen.vec}>
+                <p className={SLOT_THEME.vec.readSetTitle}>Vec Get</p>
+                <div className={readGetValueRow}>
+                  <span className={SLOT_THEME.vec.readMetaLabel}>
+                    Vec&lt;u32&gt; <span className="font-normal">· get_vec_u32()</span>
+                  </span>
+                  <span className={SLOT_THEME.vec.readMetaValueWide}>
+                    {loadingRead ? "…" : readDisplay(storedVecJson)}
+                  </span>
+                </div>
+              </ReadGetSlotPulseWrap>
+            </li>
+            <li className={SLOT_THEME.scores.readCard}>
+              <ReadGetSlotPulseWrap pulseGen={readSlotPulseGen.scores}>
+                <p className={SLOT_THEME.scores.readSetTitle}>Scores Get</p>
+                <div className={readGetValueRow}>
+                  <span className={SLOT_THEME.scores.readMetaLabel}>
+                    Map <span className="font-normal">· get_scores()</span>
+                  </span>
+                  <span className={SLOT_THEME.scores.readMetaValueWide}>
+                    {loadingRead ? "…" : readDisplay(storedScoresJson)}
+                  </span>
+                </div>
+              </ReadGetSlotPulseWrap>
+            </li>
+            <li className={SLOT_THEME.plain.readCard}>
+              <ReadGetSlotPulseWrap pulseGen={readSlotPulseGen.plain}>
+                <p className={SLOT_THEME.plain.readSetTitle}>Plain addr Get</p>
+                <div className={readGetValueRow}>
+                  <span className={SLOT_THEME.plain.readMetaLabel}>
+                    Address <span className="font-normal">· get_plain_addr()</span>
+                  </span>
+                  <span className={SLOT_THEME.plain.readMetaValueWide}>
+                    {loadingRead ? "…" : readDisplay(storedPlainAddr)}
+                  </span>
+                </div>
+              </ReadGetSlotPulseWrap>
+            </li>
+            <li className={SLOT_THEME.nested.readCard}>
+              <ReadGetSlotPulseWrap pulseGen={readSlotPulseGen.nested}>
+                <p className={SLOT_THEME.nested.readSetTitle}>Nested Get</p>
+                <div className={readGetValueRow}>
+                  <span className={SLOT_THEME.nested.readMetaLabel}>
+                    struct <span className="font-normal">· get_nested()</span>
+                  </span>
+                  <span className={SLOT_THEME.nested.readMetaValueWide}>
+                    {loadingRead ? "…" : readDisplay(storedNestedSummary)}
+                  </span>
+                </div>
+              </ReadGetSlotPulseWrap>
+            </li>
+            <li className={SLOT_THEME.widget.readCard}>
+              <ReadGetSlotPulseWrap pulseGen={readSlotPulseGen.widget}>
+                <p className={SLOT_THEME.widget.readSetTitle}>Widget Get</p>
+                <div className={readGetValueRow}>
+                  <span className={SLOT_THEME.widget.readMetaLabel}>
+                    enum <span className="font-normal">· get_widget()</span>
+                  </span>
+                  <span className={SLOT_THEME.widget.readMetaValue}>
+                    {loadingRead ? "…" : readDisplay(storedWidgetLabel)}
+                  </span>
+                </div>
+              </ReadGetSlotPulseWrap>
+            </li>
+              </>
+            ) : null}
           </ul>
       </section>
 
@@ -1582,6 +2057,16 @@ export default function HomePage() {
                 setSymbolInput(p.symbol);
                 setPointerInput(p.pointer);
                 setI128WideInput(p.i128Wide);
+                setVecU32Input(p.vecU32 ?? "1,2,3");
+                setScoresInput(p.scores ?? "alpha=1");
+                setPlainAddrWriteInput(
+                  p.plainAddr ?? "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+                );
+                setNestedInnerXInput(p.nestedInnerX ?? "0");
+                setNestedStampInput(p.nestedStamp ?? "0");
+                setWidgetKindInput(p.widgetKind ?? "off");
+                setWidgetPairAInput(p.widgetPairA ?? "1");
+                setWidgetPairBInput(p.widgetPairB ?? "2");
                 const next = (i + 1) % DEMO_PRESET_COUNT;
                 writeDemoPresetIndex(next);
                 setNextDemoPresetIndex(next);
@@ -1890,6 +2375,168 @@ export default function HomePage() {
               set_i128()
             </button>
           </form>
+          {hasCoverageTypesApi === true ? (
+            <>
+          <form
+            onSubmit={(ev) => void onSubmitVecU32(ev)}
+            className={SLOT_THEME.vec.writeForm}
+          >
+            <p className={SLOT_THEME.vec.writeSetTitle}>Vec Set</p>
+            <label className={SLOT_THEME.vec.writeLabel}>
+              Vec&lt;u32&gt; (comma-separated, max 16)
+              <input
+                className={SLOT_THEME.vec.writeInputWide}
+                value={vecU32Input}
+                onChange={(ev) => setVecU32Input(ev.target.value)}
+                placeholder="1,2,3"
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              className={SLOT_THEME.vec.writeBtn}
+            >
+              <Hash className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              set_vec_u32()
+            </button>
+          </form>
+          <form
+            onSubmit={(ev) => void onSubmitScores(ev)}
+            className={SLOT_THEME.scores.writeForm}
+          >
+            <p className={SLOT_THEME.scores.writeSetTitle}>Scores Set</p>
+            <label className={SLOT_THEME.scores.writeLabel}>
+              Map (comma-separated key=value, max 8 entries, keys ≤24 chars)
+              <input
+                className={SLOT_THEME.scores.writeInputWide}
+                value={scoresInput}
+                onChange={(ev) => setScoresInput(ev.target.value)}
+                placeholder="alpha=1,beta=2"
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              className={SLOT_THEME.scores.writeBtn}
+            >
+              <Tag className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              set_scores()
+            </button>
+          </form>
+          <form
+            onSubmit={(ev) => void onSubmitPlainAddr(ev)}
+            className={SLOT_THEME.plain.writeForm}
+          >
+            <p className={SLOT_THEME.plain.writeSetTitle}>Plain addr Set</p>
+            <label className={SLOT_THEME.plain.writeLabel}>
+              Address (required G… / C… strkey)
+              <input
+                className={SLOT_THEME.plain.writeInputWide}
+                value={plainAddrWriteInput}
+                onChange={(ev) => setPlainAddrWriteInput(ev.target.value)}
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              className={SLOT_THEME.plain.writeBtn}
+            >
+              <Wallet className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              set_plain_addr()
+            </button>
+          </form>
+          <form
+            onSubmit={(ev) => void onSubmitNested(ev)}
+            className={SLOT_THEME.nested.writeForm}
+          >
+            <p className={SLOT_THEME.nested.writeSetTitle}>Nested Set</p>
+            <label className={SLOT_THEME.nested.writeLabel}>
+              inner.x (u32)
+              <input
+                className={SLOT_THEME.nested.writeInput}
+                value={nestedInnerXInput}
+                onChange={(ev) => setNestedInnerXInput(ev.target.value)}
+                inputMode="numeric"
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              />
+            </label>
+            <label className={SLOT_THEME.nested.writeLabel}>
+              stamp (u64)
+              <input
+                className={SLOT_THEME.nested.writeInput}
+                value={nestedStampInput}
+                onChange={(ev) => setNestedStampInput(ev.target.value)}
+                inputMode="numeric"
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              className={SLOT_THEME.nested.writeBtn}
+            >
+              <FileCode className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              set_nested()
+            </button>
+          </form>
+          <form
+            onSubmit={(ev) => void onSubmitWidget(ev)}
+            className={SLOT_THEME.widget.writeForm}
+          >
+            <p className={SLOT_THEME.widget.writeSetTitle}>Widget Set</p>
+            <label className={SLOT_THEME.widget.writeLabel}>
+              DemoWidget
+              <select
+                className={SLOT_THEME.widget.writeInput}
+                value={widgetKindInput}
+                onChange={(ev) =>
+                  setWidgetKindInput(ev.target.value as "off" | "on" | "pair")
+                }
+                disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              >
+                <option value="off">Off</option>
+                <option value="on">On</option>
+                <option value="pair">Pair(u32,u32)</option>
+              </select>
+            </label>
+            {widgetKindInput === "pair" ? (
+              <>
+                <label className={SLOT_THEME.widget.writeLabel}>
+                  Pair left (u32)
+                  <input
+                    className={SLOT_THEME.widget.writeInput}
+                    value={widgetPairAInput}
+                    onChange={(ev) => setWidgetPairAInput(ev.target.value)}
+                    inputMode="numeric"
+                    disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+                  />
+                </label>
+                <label className={SLOT_THEME.widget.writeLabel}>
+                  Pair right (u32)
+                  <input
+                    className={SLOT_THEME.widget.writeInput}
+                    value={widgetPairBInput}
+                    onChange={(ev) => setWidgetPairBInput(ev.target.value)}
+                    inputMode="numeric"
+                    disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+                  />
+                </label>
+              </>
+            ) : null}
+            <button
+              type="submit"
+              disabled={hasCoverageTypesApi !== true || writePending || !walletReady}
+              className={SLOT_THEME.widget.writeBtn}
+            >
+              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              set_widget()
+            </button>
+          </form>
+            </>
+          ) : null}
           </div>
         </div>
       </section>

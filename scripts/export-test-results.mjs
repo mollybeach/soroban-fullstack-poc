@@ -73,7 +73,7 @@ const TEST_DETAILS = {
   "integration_sequence_matches_property_last_write_wins":
     "Integration binary: fixed sequence [7,14,21,42]; after each step `get` equals the value just set.",
   "integration_multi_slot_roundtrip_and_isolation":
-    "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>; reads all back; then checks u32 update does not clobber i32 / i128.",
+    "Integration: writes u32, i32, bool, i64, u128, i128, Bytes, Symbol, Option<Address>, Vec<u32>, Map, plain Address, nested struct, enum; reads all back; then checks u32 update does not clobber i32 / i128.",
   "test::set_flag_get_roundtrip": "`set_flag` / `get_flag` round-trip.",
   "test::set_i64_get_roundtrip": "`set_i64` / `get_i64` round-trip.",
   "test::set_blob_get_roundtrip": "`set_blob` / `get_blob` with short `Bytes` payload.",
@@ -81,6 +81,16 @@ const TEST_DETAILS = {
   "test::set_symbol_get_roundtrip": "`set_symbol(String)` / `get_symbol` as `Symbol` round-trip.",
   "test::set_pointer_get_roundtrip": "`set_pointer(Option<Address>)` / `get_pointer` (Some + None paths).",
   "test::set_i128_get_roundtrip": "`set_i128` / `get_i128` including min/max-style values.",
+  "test::set_vec_u32_get_roundtrip":
+    "`set_vec_u32` / `get_vec_u32` with a short `Vec<u32>` (Soroban collection round-trip).",
+  "test::set_scores_get_roundtrip":
+    "`set_scores` / `get_scores` with a small `Map<String, u32>` (string keys + u32 values).",
+  "test::set_plain_addr_get_roundtrip":
+    "Non-optional `Address`: default burned strkey before set; `set_plain_addr` / `get_plain_addr` with the contract id.",
+  "test::set_nested_get_roundtrip":
+    "Nested `#[contracttype]` struct: `OuterBits` with `InnerBits` + `stamp` via `set_nested` / `get_nested`.",
+  "test::set_widget_get_roundtrip":
+    "User `#[contracttype]` enum: `DemoWidget` Off / On / Pair arms via `set_widget` / `get_widget`.",
   "test::invariant_flag_last_write_visible_on_get_flag":
     "Proptest: random bool sequence on `set_flag`; `get_flag` equals last write.",
   "test::invariant_i64_last_write_visible":
