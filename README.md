@@ -189,6 +189,8 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make contract-fuzz-smoke` | Short `cargo fuzz run storage_set_get` in `contracts/basic-storage/fuzz` (requires `cargo install cargo-fuzz`) |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
 | `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |
+| `make contract-interface-json` | After `build-contract`, runs `stellar contract info interface --wasm …/basic_storage.wasm --output json-formatted` and writes **`frontend/contract-spec/basic-storage-interface.json`** (needs Stellar CLI; same JSON the **Contract interface** page loads) |
+| `make contract-bindings` | Runs **`make contract-interface-json`**, then `stellar contract bindings typescript` into **`frontend/lib/basic-storage-bindings/`** (regenerate spec + TS client) |
 | `make build-frontend` | `npm run build` in `frontend/`; runs `npm ci` first if `react/cjs` is missing (fixes incomplete installs) |
 | `make check` | `fmt-check`, `clippy`, `contract-test`, `build-contract`, `build-frontend` (expects `frontend/node_modules` already) |
 | `make ci` | `install-rust-target`, `install-frontend`, then the same steps as `make check` (use from a clean clone) |
@@ -260,6 +262,19 @@ stellar contract build
 Recent **Stellar CLI** releases (for example **v26+**) require **`overflow-checks = true`** under **`[profile.release]`** in the contract `Cargo.toml`; this repo sets that so `stellar contract build` and **`make deploy`** succeed.
 
 **WASM / size:** Release wasm comes from `stellar contract build` (or `cargo build --target wasm32v1-none --release`). For production hardening, follow current Stellar docs on wasm size and cost (optimization flags, avoiding unnecessary deps in the contract crate).
+
+## Contract interface JSON (CLI)
+
+To dump the formatted Soroban contract interface spec for the built wasm (functions, events, UDTs) without regenerating TypeScript bindings:
+
+```bash
+# From repo root (path matches make build-contract / stellar contract build output)
+stellar contract info interface \
+  --wasm contracts/basic-storage/target/wasm32v1-none/release/basic_storage.wasm \
+  --output json-formatted
+```
+
+Pipe or redirect to a file as needed, or run **`make contract-interface-json`** to write **`frontend/contract-spec/basic-storage-interface.json`** (after `build-contract`). For the full spec plus generated client, use **`make contract-bindings`**.
 
 ---
 

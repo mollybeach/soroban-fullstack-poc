@@ -1,0 +1,558 @@
+[
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "I64Set",
+      "prefix_topics": [
+        "i64_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i64",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "TagSet",
+      "prefix_topics": [
+        "tag_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "label",
+          "type_": "string",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "udt_union_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "DataKey",
+      "cases": [
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "Value"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "Signed"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "Tag"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "",
+            "name": "Counter"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Boolean toggle (e.g. feature flag).",
+            "name": "Flag"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "64-bit signed integer.",
+            "name": "WideI"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Small opaque blob (capped length).",
+            "name": "Blob"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "128-bit unsigned integer.",
+            "name": "WideU"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Short interned label (Stellar `Symbol`, max 32 chars).",
+            "name": "Code"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "Optional Stellar account / contract address.",
+            "name": "Pointer"
+          }
+        },
+        {
+          "void_v0": {
+            "doc": "128-bit signed integer.",
+            "name": "WideI128"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "BlobSet",
+      "prefix_topics": [
+        "blob_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "len",
+          "type_": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CodeSet",
+      "prefix_topics": [
+        "code_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "len",
+          "type_": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "FlagSet",
+      "prefix_topics": [
+        "flag_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "on",
+          "type_": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "ValueSet",
+      "prefix_topics": [
+        "value_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "value",
+          "type_": "u32",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "SignedSet",
+      "prefix_topics": [
+        "signed_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i32",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "CounterSet",
+      "prefix_topics": [
+        "counter_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "n",
+          "type_": "u64",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "PointerSet",
+      "prefix_topics": [
+        "pointer_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "present",
+          "type_": "bool",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "WideI128Set",
+      "prefix_topics": [
+        "wide_i128_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i128",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "event_v0": {
+      "doc": "",
+      "lib": "",
+      "name": "WideU128Set",
+      "prefix_topics": [
+        "wide_u128_set"
+      ],
+      "params": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "u128",
+          "location": "data"
+        }
+      ],
+      "data_format": "single_value"
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get",
+      "inputs": [],
+      "outputs": [
+        "u32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "value",
+          "type_": "u32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_i64",
+      "inputs": [],
+      "outputs": [
+        "i64"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_tag",
+      "inputs": [],
+      "outputs": [
+        "string"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_i64",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i64"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a short text label and emits `TagSet` (string payload for indexers).",
+      "name": "set_tag",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "label",
+          "type_": "string"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_blob",
+      "inputs": [],
+      "outputs": [
+        "bytes"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_flag",
+      "inputs": [],
+      "outputs": [
+        "bool"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_i128",
+      "inputs": [],
+      "outputs": [
+        "i128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_u128",
+      "inputs": [],
+      "outputs": [
+        "u128"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_blob",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "data",
+          "type_": "bytes"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_flag",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "on",
+          "type_": "bool"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_i128",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "set_u128",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "u128"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_signed",
+      "inputs": [],
+      "outputs": [
+        "i32"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_symbol",
+      "inputs": [],
+      "outputs": [
+        "symbol"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a signed integer and emits `SignedSet`.",
+      "name": "set_signed",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "v",
+          "type_": "i32"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a short `Symbol` (interned id; pass UTF-8 bytes that match Symbol rules: `a-zA-Z0-9_`, 1\\xe2\\x80\\x9332 chars).",
+      "name": "set_symbol",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "label",
+          "type_": "string"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_counter",
+      "inputs": [],
+      "outputs": [
+        "u64"
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "",
+      "name": "get_pointer",
+      "inputs": [],
+      "outputs": [
+        {
+          "option": {
+            "value_type": "address"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores a u64 counter and emits `CounterSet`.",
+      "name": "set_counter",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "n",
+          "type_": "u64"
+        }
+      ],
+      "outputs": []
+    }
+  },
+  {
+    "function_v0": {
+      "doc": "Stores an optional Stellar address (account or contract).",
+      "name": "set_pointer",
+      "inputs": [
+        {
+          "doc": "",
+          "name": "who",
+          "type_": {
+            "option": {
+              "value_type": "address"
+            }
+          }
+        }
+      ],
+      "outputs": []
+    }
+  }
+]

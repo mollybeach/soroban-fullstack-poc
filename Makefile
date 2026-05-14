@@ -18,7 +18,7 @@ else
 FUZZ_SAN_FLAGS :=
 endif
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend check ci ci-coverage clean clean-frontend stellar-identity deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend contract-interface-json contract-bindings check ci ci-coverage clean clean-frontend stellar-identity deploy dev-frontend
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -114,6 +114,25 @@ build-contract: ## Build Soroban WASM (stellar if installed, else cargo release 
 			if [ -n "$$dep" ] && [ -f "$$dep" ]; then cp "$$dep" target/wasm32v1-none/release/basic_storage.wasm; fi; \
 		fi; \
 	fi
+
+BINDINGS_WASM := $(CONTRACT_DIR)/target/wasm32v1-none/release/basic_storage.wasm
+
+# Formatted interface spec consumed by the /bindings page and tooling.
+# Equivalent CLI (from repo root, after build): stellar contract info interface --wasm contracts/basic-storage/target/wasm32v1-none/release/basic_storage.wasm --output json-formatted
+contract-interface-json: build-contract ## Dump formatted contract interface JSON to frontend/contract-spec/ (needs stellar CLI)
+	@if ! command -v stellar >/dev/null 2>&1; then \
+		echo "error: stellar CLI required for contract-interface-json" >&2; \
+		exit 1; \
+	fi
+	@test -f "$(BINDINGS_WASM)" || (echo "error: missing wasm at $(BINDINGS_WASM) (build-contract failed?)" >&2 && exit 1)
+	@mkdir -p "$(FRONTEND_DIR)/contract-spec"
+	stellar contract info interface --wasm "$(BINDINGS_WASM)" --output json-formatted > "$(FRONTEND_DIR)/contract-spec/basic-storage-interface.json"
+	@echo "Updated: frontend/contract-spec/basic-storage-interface.json"
+
+contract-bindings: contract-interface-json ## Refresh interface JSON + stellar contract bindings typescript (needs stellar CLI)
+	rm -rf "$(FRONTEND_DIR)/lib/basic-storage-bindings"
+	stellar contract bindings typescript --wasm "$(BINDINGS_WASM)" --output-dir "$(FRONTEND_DIR)/lib/basic-storage-bindings" --overwrite
+	@echo "Updated: frontend/contract-spec/basic-storage-interface.json and frontend/lib/basic-storage-bindings/"
 
 build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is missing)
 	cd "$(FRONTEND_DIR)" && \

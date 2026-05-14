@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   BookOpen,
+  Braces,
   CirclePlay,
   FlaskConical,
   House,
@@ -68,6 +69,15 @@ export function SiteHeader() {
             >
               <BookOpen className="h-4 w-4 shrink-0 text-violet-700 sm:text-current" aria-hidden />
               <span className="hidden sm:inline">Docs</span>
+            </Link>
+            <Link
+              href="/bindings"
+              title="Contract interface"
+              aria-label="Contract interface"
+              className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-full px-2 py-1.5 transition hover:bg-violet-100 hover:text-violet-900 sm:min-h-0 sm:min-w-0 sm:px-3"
+            >
+              <Braces className="h-4 w-4 shrink-0 text-violet-700 sm:text-current" aria-hidden />
+              <span className="hidden sm:inline">Interface</span>
             </Link>
             <Link
               href="/tests"
