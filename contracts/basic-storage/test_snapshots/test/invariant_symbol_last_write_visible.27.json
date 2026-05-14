@@ -7,6 +7,12 @@
   "auth": [
     [],
     [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
     []
   ],
   "ledger": {
@@ -49,7 +55,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "symbol": "a"
+                  "symbol": "POC"
                 }
               }
             },

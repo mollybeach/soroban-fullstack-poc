@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import contractSpec from "@/contract-spec/basic-storage-interface.json";
+import interfaceMeta from "@/contract-spec/basic-storage-interface.meta.json";
 import { BindingsExplorer } from "./bindings-explorer";
 
 export const metadata: Metadata = {
@@ -10,6 +11,12 @@ export const metadata: Metadata = {
 
 type SpecEntry = Record<string, unknown>;
 
+type InterfaceMeta = { generatedAt: string; wasmRelative?: string };
+
 export default function BindingsPage() {
-  return <BindingsExplorer spec={contractSpec as SpecEntry[]} />;
+  const generatedAt =
+    typeof (interfaceMeta as InterfaceMeta).generatedAt === "string"
+      ? (interfaceMeta as InterfaceMeta).generatedAt
+      : new Date(0).toISOString();
+  return <BindingsExplorer spec={contractSpec as SpecEntry[]} interfaceGeneratedAt={generatedAt} />;
 }

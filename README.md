@@ -124,13 +124,15 @@ The Soroban contract exposes small storage setters and getters for **indexer dem
 | `set_counter(u64)` / `get_counter()` | `CounterSet { n }` |
 | `set_flag(bool)` / `get_flag()` | `FlagSet { on }` |
 | `set_i64(i64)` / `get_i64()` | `I64Set { v }` |
-| `set_blob(Bytes)` / `get_blob()` | `BlobSet { len }` |
+| `set_blob(Bytes)` / `get_blob()` | `BlobSet { data }` (same bytes as input, max 64) |
 | `set_u128(u128)` / `get_u128()` | `WideU128Set { v }` |
-| `set_symbol(String)` / `get_symbol()` | `CodeSet { len }` |
-| `set_pointer(Option<Address>)` / `get_pointer()` | `PointerSet { present }` |
+| `set_symbol(String)` / `get_symbol()` | `CodeSet { label }` (same string as input) |
+| `set_pointer(Option<Address>)` / `get_pointer()` | `PointerSet { who }` (same option as input) |
 | `set_i128(i128)` / `get_i128()` | `WideI128Set { v }` |
 
-After changing the contract, **redeploy** wasm and set **`NEXT_PUBLIC_CONTRACT_ID`** again; older deployments will not expose the new entrypoints.
+**Event payload parity:** for **`BlobSet`**, **`CodeSet`**, and **`PointerSet`**, the event body mirrors the **function argument** (`data`, `label`, `who`) so listeners can test **invocation == event** the same way you often do on EVM. `BlobSet` is still capped at **64 bytes** so event + storage stay bounded.
+
+After changing the contract (entrypoints, events, or storage layout), **redeploy** wasm, set **`NEXT_PUBLIC_CONTRACT_ID`** to the **new** id, and run **`make contract-bindings`** so the checked-in **`frontend/contract-spec/basic-storage-interface.json`** and **`/bindings`** UI match the wasm you ship. Older contract instances keep their old event shapes forever.
 
 Example (`ValueSet` — same pattern for the other structs):
 
@@ -189,7 +191,7 @@ From the **repository root**, run `make` or `make help` to list targets.
 | `make contract-fuzz-smoke` | Short `cargo fuzz run storage_set_get` in `contracts/basic-storage/fuzz` (requires `cargo install cargo-fuzz`) |
 | `make clippy` | `cargo clippy --all-targets -- -D warnings` in `contracts/basic-storage/` |
 | `make build-contract` | `stellar contract build` when the Stellar CLI is on your `PATH`; otherwise `cargo build --target wasm32v1-none --release` in `contracts/basic-storage/` (install the CLI for deploy and for the official packaged build) |
-| `make contract-interface-json` | After `build-contract`, runs `stellar contract info interface --wasm …/basic_storage.wasm --output json-formatted` and writes **`frontend/contract-spec/basic-storage-interface.json`** (needs Stellar CLI; same JSON the **Contract interface** page loads) |
+| `make contract-interface-json` | After `build-contract`, runs `stellar contract info interface --wasm …/basic_storage.wasm --output json-formatted` and writes **`frontend/contract-spec/basic-storage-interface.json`**, plus **`frontend/contract-spec/basic-storage-interface.meta.json`** (`generatedAt` for the **Interface** page) |
 | `make contract-bindings` | Runs **`make contract-interface-json`**, then `stellar contract bindings typescript` into **`frontend/lib/basic-storage-bindings/`** (regenerate spec + TS client) |
 | `make build-frontend` | `npm run build` in `frontend/`; runs `npm ci` first if `react/cjs` is missing (fixes incomplete installs) |
 | `make check` | `fmt-check`, `clippy`, `contract-test`, `build-contract`, `build-frontend` (expects `frontend/node_modules` already) |
@@ -274,7 +276,7 @@ stellar contract info interface \
   --output json-formatted
 ```
 
-Pipe or redirect to a file as needed, or run **`make contract-interface-json`** to write **`frontend/contract-spec/basic-storage-interface.json`** (after `build-contract`). For the full spec plus generated client, use **`make contract-bindings`**.
+Pipe or redirect to a file as needed, or run **`make contract-interface-json`** to write **`frontend/contract-spec/basic-storage-interface.json`** and **`basic-storage-interface.meta.json`** (timestamp for `/bindings`) after `build-contract`. For the full spec plus generated client, use **`make contract-bindings`**.
 
 ---
 
@@ -307,6 +309,12 @@ make deploy
 Or `./scripts/deploy-testnet.sh` (first argument is the source identity name if not using the default).
 
 The root **`Makefile`** prepends common install locations to **`PATH`** so **`make deploy`** usually finds Homebrew’s **`stellar`** even when bare **`make`** would not.
+
+## After deploy (env + bindings)
+
+1. Copy the line the script prints: **`CONTRACT_ID=C…`**.
+2. Set **`NEXT_PUBLIC_CONTRACT_ID`** in **`frontend/.env.local`** (local dev) and in **Vercel** (or whatever hosts the Next app) so reads/writes hit the new instance.
+3. If you changed Rust since the last check-in, run **`make contract-bindings`** from the repo root and commit the updated **`frontend/contract-spec/basic-storage-interface.json`** (and generated **`frontend/lib/basic-storage-bindings/`** if you version that tree). The **Interface** page (`/bindings`) always reflects that checked-in spec, not an arbitrary on-chain id.
 
 ---
 

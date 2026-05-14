@@ -66,10 +66,11 @@ pub struct I64Set {
     pub v: i64,
 }
 
+/// Emits the same `Bytes` passed to `set_blob` (capped by `MAX_BLOB_LEN`) for indexer / EVM-style parity.
 #[contractevent(data_format = "single-value")]
 #[derive(Clone)]
 pub struct BlobSet {
-    pub len: u32,
+    pub data: Bytes,
 }
 
 #[contractevent(data_format = "single-value")]
@@ -84,16 +85,18 @@ pub struct WideI128Set {
     pub v: i128,
 }
 
+/// Same UTF-8 string input as `set_symbol` (before interning as `Symbol` in storage).
 #[contractevent(data_format = "single-value")]
 #[derive(Clone)]
 pub struct CodeSet {
-    pub len: u32,
+    pub label: String,
 }
 
+/// Same `Option<Address>` as `set_pointer` so event payload matches invocation.
 #[contractevent(data_format = "single-value")]
 #[derive(Clone)]
 pub struct PointerSet {
-    pub present: bool,
+    pub who: Option<Address>,
 }
 
 #[contract]
@@ -177,7 +180,7 @@ impl BasicStorageContract {
         }
         env.storage().persistent().set(&DataKey::Blob, &data);
         BlobSet {
-            len: data.len(),
+            data: data.clone(),
         }
         .publish(&env);
     }
@@ -209,7 +212,10 @@ impl BasicStorageContract {
         let s = core::str::from_utf8(&buf[..n]).expect("symbol utf8");
         let sym = Symbol::new(&env, s);
         env.storage().persistent().set(&DataKey::Code, &sym);
-        CodeSet { len: label.len() }.publish(&env);
+        CodeSet {
+            label: label.clone(),
+        }
+        .publish(&env);
     }
 
     pub fn get_symbol(env: Env) -> Symbol {
@@ -222,10 +228,7 @@ impl BasicStorageContract {
     /// Stores an optional Stellar address (account or contract).
     pub fn set_pointer(env: Env, who: Option<Address>) {
         env.storage().persistent().set(&DataKey::Pointer, &who);
-        PointerSet {
-            present: who.is_some(),
-        }
-        .publish(&env);
+        PointerSet { who: who.clone() }.publish(&env);
     }
 
     pub fn get_pointer(env: Env) -> Option<Address> {

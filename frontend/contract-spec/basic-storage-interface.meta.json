@@ -1,0 +1,4 @@
+{
+  "generatedAt": "2026-05-14T15:51:02.988Z",
+  "wasmRelative": "contracts/basic-storage/target/wasm32v1-none/release/basic_storage.wasm"
+}

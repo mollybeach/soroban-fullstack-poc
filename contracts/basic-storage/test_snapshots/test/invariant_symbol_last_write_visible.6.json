@@ -52,7 +52,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "symbol": "a"
+                  "symbol": "ab"
                 }
               }
             },

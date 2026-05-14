@@ -16,6 +16,7 @@
     [],
     [],
     [],
+    [],
     []
   ],
   "ledger": {
@@ -58,7 +59,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bool": false
+                  "bool": true
                 }
               }
             },

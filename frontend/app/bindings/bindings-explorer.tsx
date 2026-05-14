@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCopy,
+  Clock,
   FileJson2,
   RadioTower,
   TableProperties,
@@ -123,9 +124,23 @@ function Row({
   );
 }
 
-export function BindingsExplorer({ spec }: { spec: SpecEntry[] }) {
+export function BindingsExplorer({
+  spec,
+  interfaceGeneratedAt,
+}: {
+  spec: SpecEntry[];
+  interfaceGeneratedAt: string;
+}) {
   const part = useMemo(() => partitionSpec(spec), [spec]);
   const [copied, setCopied] = useState(false);
+
+  const generated = new Date(interfaceGeneratedAt);
+  const timeLabel = Number.isNaN(generated.getTime())
+    ? "—"
+    : generated.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
 
   const rawJson = useMemo(() => JSON.stringify(spec, null, 2), [spec]);
 
@@ -142,31 +157,50 @@ export function BindingsExplorer({ spec }: { spec: SpecEntry[] }) {
   return (
     <div className="space-y-8 pb-16">
       <div className="rounded-3xl border border-violet-200 bg-gradient-to-br from-white to-violet-50/50 p-6 shadow-md sm:p-8">
-        <div className="min-w-0 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">basic-storage</p>
-          <h1 className="flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight text-violet-950 sm:text-3xl">
-            <Braces className="h-8 w-8 shrink-0 text-violet-600" aria-hidden />
-            Contract interface
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
-            Generated from the deployed WASM spec (
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
-              stellar contract info interface --output json-formatted
-            </code>
-            ). TypeScript bindings live in{" "}
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
-              frontend/lib/basic-storage-bindings/
-            </code>{" "}
-            (
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
-              stellar contract bindings typescript
-            </code>
-            ). Regenerate both with{" "}
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
-              make contract-bindings
-            </code>
-            .
-          </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-600">basic-storage</p>
+            <h1 className="flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight text-violet-950 sm:text-3xl">
+              <Braces className="h-8 w-8 shrink-0 text-violet-600" aria-hidden />
+              Contract interface
+            </h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-slate-600">
+              This page shows the spec for the <strong>wasm built from this repo</strong> (
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
+                stellar contract info interface --output json-formatted
+              </code>
+              ). TypeScript bindings live in{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
+                frontend/lib/basic-storage-bindings/
+              </code>{" "}
+              (
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
+                stellar contract bindings typescript
+              </code>
+              ). Refresh both with{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
+                make contract-bindings
+              </code>
+              . Testnet txs use whatever contract id is in{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">
+                NEXT_PUBLIC_CONTRACT_ID
+              </code>{" "}
+              after you run <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800">make deploy</code>.
+            </p>
+          </div>
+          <div className="shrink-0 rounded-2xl border border-violet-200 bg-violet-50/80 px-4 py-3 shadow-sm sm:min-w-[11rem]">
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-violet-700">
+              <Clock className="h-4 w-4 shrink-0" aria-hidden />
+              Spec captured
+            </p>
+            <p className="mt-1.5 text-sm font-semibold text-violet-950">{timeLabel}</p>
+            <p className="mt-2 text-[11px] leading-snug text-violet-900/75">
+              From{" "}
+              <code className="rounded bg-white/70 px-1 font-mono text-[10px]">basic-storage-interface.meta.json</code>{" "}
+              (written by{" "}
+              <code className="rounded bg-white/70 px-1 font-mono text-[10px]">make contract-interface-json</code>).
+            </p>
+          </div>
         </div>
       </div>
 

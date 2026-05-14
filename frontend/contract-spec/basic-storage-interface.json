@@ -114,7 +114,7 @@
   },
   {
     "event_v0": {
-      "doc": "",
+      "doc": "Emits the same `Bytes` passed to `set_blob` (capped by `MAX_BLOB_LEN`) for indexer / EVM-style parity.",
       "lib": "",
       "name": "BlobSet",
       "prefix_topics": [
@@ -123,8 +123,8 @@
       "params": [
         {
           "doc": "",
-          "name": "len",
-          "type_": "u32",
+          "name": "data",
+          "type_": "bytes",
           "location": "data"
         }
       ],
@@ -133,7 +133,7 @@
   },
   {
     "event_v0": {
-      "doc": "",
+      "doc": "Same UTF-8 string input as `set_symbol` (before interning as `Symbol` in storage).",
       "lib": "",
       "name": "CodeSet",
       "prefix_topics": [
@@ -142,8 +142,8 @@
       "params": [
         {
           "doc": "",
-          "name": "len",
-          "type_": "u32",
+          "name": "label",
+          "type_": "string",
           "location": "data"
         }
       ],
@@ -228,7 +228,7 @@
   },
   {
     "event_v0": {
-      "doc": "",
+      "doc": "Same `Option<Address>` as `set_pointer` so event payload matches invocation.",
       "lib": "",
       "name": "PointerSet",
       "prefix_topics": [
@@ -237,8 +237,12 @@
       "params": [
         {
           "doc": "",
-          "name": "present",
-          "type_": "bool",
+          "name": "who",
+          "type_": {
+            "option": {
+              "value_type": "address"
+            }
+          },
           "location": "data"
         }
       ],

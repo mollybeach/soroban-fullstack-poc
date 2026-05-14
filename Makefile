@@ -127,12 +127,13 @@ contract-interface-json: build-contract ## Dump formatted contract interface JSO
 	@test -f "$(BINDINGS_WASM)" || (echo "error: missing wasm at $(BINDINGS_WASM) (build-contract failed?)" >&2 && exit 1)
 	@mkdir -p "$(FRONTEND_DIR)/contract-spec"
 	stellar contract info interface --wasm "$(BINDINGS_WASM)" --output json-formatted > "$(FRONTEND_DIR)/contract-spec/basic-storage-interface.json"
-	@echo "Updated: frontend/contract-spec/basic-storage-interface.json"
+	@node -e 'const fs=require("fs"); const p="$(FRONTEND_DIR)/contract-spec/basic-storage-interface.meta.json"; fs.writeFileSync(p, JSON.stringify({ generatedAt: new Date().toISOString(), wasmRelative: "contracts/basic-storage/target/wasm32v1-none/release/basic_storage.wasm" }, null, 2) + "\n");'
+	@echo "Updated: frontend/contract-spec/basic-storage-interface.json and basic-storage-interface.meta.json"
 
 contract-bindings: contract-interface-json ## Refresh interface JSON + stellar contract bindings typescript (needs stellar CLI)
 	rm -rf "$(FRONTEND_DIR)/lib/basic-storage-bindings"
 	stellar contract bindings typescript --wasm "$(BINDINGS_WASM)" --output-dir "$(FRONTEND_DIR)/lib/basic-storage-bindings" --overwrite
-	@echo "Updated: frontend/contract-spec/basic-storage-interface.json and frontend/lib/basic-storage-bindings/"
+	@echo "Updated: frontend/contract-spec/basic-storage-interface.json, basic-storage-interface.meta.json, and frontend/lib/basic-storage-bindings/"
 
 build-frontend: ## Production Next.js build (npm ci only if react/cjs bundle is missing)
 	cd "$(FRONTEND_DIR)" && \
