@@ -25,8 +25,9 @@ function sanitizeTail(text) {
 
 const repoRoot = join(__dirname, "..");
 const contractDir = join(repoRoot, "contracts", "basic-storage");
-const outPath = join(repoRoot, "frontend", "public", "test-results.json");
-const envLocalPath = join(repoRoot, "frontend", ".env.local");
+const FRONTEND_DIR = join(repoRoot, "frontend");
+const outPath = join(FRONTEND_DIR, "public", "test-results.json");
+const envLocalPath = join(FRONTEND_DIR, ".env.local");
 
 /** `NEXT_PUBLIC_CONTRACT_ID` from `frontend/.env.local` when present (for /tests context). */
 function readNextPublicContractIdFromEnvLocal() {
@@ -161,7 +162,140 @@ const CATEGORIES = [
     description:
       "Line/function instrumentation and HTML/LCOV reports. Shown on this page when `coverage-summary.json` is present.",
   },
+  {
+    id: "frontend_wallet",
+    title: "Frontend wallet (Vitest)",
+    tool: "vitest run",
+    description:
+      "Stellar Wallets Kit + WalletConnect config: env gating, module catalog (all default wallets), and QR/Reown options. Does not connect real wallets.",
+  },
 ];
+
+/** Human-readable rows for Vitest cases on /tests (key = fullName). */
+const FRONTEND_TEST_DETAILS = {
+  "catalog includes albedo (Albedo)":
+    "POC catalog matches Stellar Wallets Kit `defaultModules()` entry for Albedo.",
+  "catalog includes freighter (Freighter)": "Catalog includes Freighter (SEP-43 extension).",
+  "catalog includes fordefi (Fordefi)": "Catalog includes Fordefi module id.",
+  "catalog includes rabet (Rabet)": "Catalog includes Rabet module id.",
+  "catalog includes xbull (xBull)": "Catalog includes xBull module id.",
+  "catalog includes lobstr (LOBSTR)": "Catalog includes LOBSTR module id.",
+  "catalog includes hana (Hana Wallet)": "Catalog includes Hana Wallet module id.",
+  "catalog includes klever (Klever Wallet)": "Catalog includes Klever Wallet module id.",
+  "catalog includes onekey (OneKey Wallet)": "Catalog includes OneKey Wallet module id.",
+  "catalog includes bitget (Bitget Wallet)": "Catalog includes Bitget Wallet module id.",
+  "catalog includes cactuslink (Cactus Link)": "Catalog includes Cactus Link module id.",
+  "lists every wallet from defaultModules() (11 extension/hot wallets)":
+    "Ensures the POC catalog tracks all 11 wallets shipped in `defaultModules()` for kit v2.2.x.",
+  "uses unique product ids across the full picker list":
+    "No duplicate module ids when WalletConnect is enabled.",
+  "omits wallet_connect when project id is missing":
+    "`resolvePocWalletPickerIds` excludes WalletConnect without `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`.",
+  "appends wallet_connect when project id is set":
+    "WalletConnect appears last in the picker when a Reown project id is configured.",
+  "includes all default wallets plus WalletConnect when env is configured":
+    "Skips unless `.env.local` has a project id; validates live env matches catalog.",
+  "builds testnet metadata and silent logger for QR / Reown modal":
+    "`buildWalletConnectModuleOptions`: `stellar:testnet`, metadata, favicon icon URL, silent WC logger.",
+  "rejects empty project id": "WalletConnect module options throw if project id is blank.",
+  "returns null when unset": "`getWalletConnectProjectId` when env var missing or empty.",
+  "returns null for whitespace-only": "Whitespace-only `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` treated as unset.",
+  "returns trimmed project id": "Trims Reown project id from env.",
+  "returns false for non-objects": "`isSwkAuthModalDismissed` ignores non-error values.",
+  "returns false when code is not -1": "Modal dismiss detection requires kit error code -1.",
+  "returns true for kit dismiss shape": "User closing SWK modal is not surfaced as app error.",
+  "returns false for real errors with different copy": "Network errors are not treated as dismiss.",
+};
+
+function readNextPublicWalletConnectProjectIdFromEnvLocal() {
+  if (!existsSync(envLocalPath)) return null;
+  const text = readFileSync(envLocalPath, "utf8");
+  const m = text.match(/^\s*NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID\s*=\s*(\S+)/m);
+  if (!m) return null;
+  const id = m[1].trim().replace(/^["']|["']$/g, "");
+  return id.length > 0 ? id : null;
+}
+
+/**
+ * @returns {{ code: number; report: import('vitest').JsonOutput | null; out: string }}
+ */
+function runFrontendVitest() {
+  const vitestOut = join(FRONTEND_DIR, "target", "vitest-results.json");
+  mkdirSync(join(FRONTEND_DIR, "target"), { recursive: true });
+  const cmd =
+    "npx vitest run --reporter=json --outputFile=target/vitest-results.json 2>&1";
+  try {
+    const out = execSync(cmd, {
+      cwd: FRONTEND_DIR,
+      encoding: "utf8",
+      maxBuffer: 10 * 1024 * 1024,
+      shell: "/bin/bash",
+    });
+    const report = existsSync(vitestOut) ? JSON.parse(readFileSync(vitestOut, "utf8")) : null;
+    return { code: 0, report, out };
+  } catch (e) {
+    const status = typeof e.status === "number" ? e.status : 1;
+    const out =
+      (typeof e.stdout === "string" ? e.stdout : e.stdout?.toString?.() ?? "") +
+      (typeof e.stderr === "string" ? e.stderr : e.stderr?.toString?.() ?? "");
+    let report = null;
+    if (existsSync(vitestOut)) {
+      try {
+        report = JSON.parse(readFileSync(vitestOut, "utf8"));
+      } catch {
+        report = null;
+      }
+    }
+    return { code: status, report, out };
+  }
+}
+
+function buildFrontendWalletSuite(vitestRun) {
+  const report = vitestRun.report;
+  const tests = [];
+  let passed = 0;
+  let failed = 0;
+
+  if (report?.testResults) {
+    for (const file of report.testResults) {
+      for (const ar of file.assertionResults ?? []) {
+        const outcome =
+          ar.status === "passed" ? "passed" : ar.status === "skipped" ? "ignored" : "failed";
+        if (outcome === "passed") passed += 1;
+        else if (outcome === "failed") failed += 1;
+        const shortName = ar.title;
+        const detail =
+          FRONTEND_TEST_DETAILS[shortName] ??
+          FRONTEND_TEST_DETAILS[ar.fullName] ??
+          "Vitest wallet / WalletConnect helper test.";
+        tests.push({
+          id: `frontend-wallet:${ar.fullName}`,
+          name: ar.fullName,
+          shortName,
+          kind: "frontend_wallet",
+          kindLabel: "Frontend wallet",
+          outcome,
+          detail,
+        });
+      }
+    }
+  }
+
+  const wcProjectId = readNextPublicWalletConnectProjectIdFromEnvLocal();
+  const ok = vitestRun.code === 0 && failed === 0 && passed > 0;
+
+  return {
+    id: "frontend-wallet",
+    name: "Frontend wallet tests (Vitest)",
+    path: "frontend/lib/wallet-kit-config.test.ts, wallet-kit-utils, stellar-wallets-kit-client",
+    description: `Vitest: Stellar Wallets Kit module catalog (11 default wallets + optional WalletConnect), env gating, and WalletConnect QR/Reown options. WalletConnect in .env.local: ${wcProjectId ? "configured" : "not set"}.`,
+    passed,
+    failed,
+    ok,
+    tail: sanitizeTail(vitestRun.out),
+    tests,
+  };
+}
 
 /**
  * Run `cargo test` with stderr merged into stdout (same order as `cargo test 2>&1` in a shell).
@@ -303,13 +437,24 @@ const intBlock = extractIntegrationBlock(full.out) ?? "";
 const libR = parseTestResultLine(libBlock);
 const intR = parseTestResultLine(intBlock);
 
-const overallOk =
-  full.code === 0 && libBlock.length > 0 && intBlock.length > 0 && libR.ok && intR.ok;
-const totalPassed = libR.passed + intR.passed;
-const totalFailed = libR.failed + intR.failed;
-
 const libTests = buildSuiteTests("lib", libBlock);
 const integrationTests = buildSuiteTests("integration", intBlock);
+
+const skipFrontend = process.env.SKIP_FRONTEND_TESTS === "1";
+const vitestRun = skipFrontend ? { code: 0, report: null, out: "" } : runFrontendVitest();
+const frontendSuite = skipFrontend ? null : buildFrontendWalletSuite(vitestRun);
+
+const frontendOk = skipFrontend || (frontendSuite?.ok ?? false);
+const overallOk =
+  full.code === 0 &&
+  libBlock.length > 0 &&
+  intBlock.length > 0 &&
+  libR.ok &&
+  intR.ok &&
+  frontendOk &&
+  (skipFrontend || vitestRun.code === 0);
+const totalPassed = libR.passed + intR.passed + (frontendSuite?.passed ?? 0);
+const totalFailed = libR.failed + intR.failed + (frontendSuite?.failed ?? 0);
 
 const externalRuns = [
   {
@@ -323,6 +468,17 @@ const externalRuns = [
       "Decodes `u32`, `i64`, `u128`, `bool`, and bounded `Bytes` from random input; asserts round-trips on independent slots (same WASM as the repo contract).",
     note: "Not run by this script. Execute locally or in a job with `cargo-fuzz` and LLVM fuzzer deps installed.",
   },
+  {
+    id: "wallet-connect-qr-manual",
+    categoryId: "frontend_wallet",
+    name: "WalletConnect QR (manual)",
+    path: "frontend/lib/stellar-wallets-kit-client.ts",
+    makeTarget: "make dev",
+    cli: "Connect wallet → WalletConnect → scan QR with a Stellar mobile wallet",
+    description:
+      "Browser-only: Reown modal shows a QR code on `stellar:testnet`. Vitest does not drive real wallet pairing.",
+    note: "Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in `frontend/.env.local`. Run `make test-frontend` for automated checks.",
+  },
 ];
 
 const pocContractId = readNextPublicContractIdFromEnvLocal();
@@ -334,7 +490,7 @@ const payload = {
   /** Testnet id from `frontend/.env.local` at export time (Home/Demo wallet flows); not used by `cargo test`. */
   pocContractId,
   testScopeNote:
-    "These rows come from `cargo test` in `contracts/basic-storage` (isolated Soroban `Env` per case). They do not hit testnet RPC. `pocContractId` is the demo contract id captured from `frontend/.env.local` when this JSON was generated.",
+    "Contract rows: `cargo test` in `contracts/basic-storage` (isolated Soroban `Env`). Frontend wallet rows: `vitest run` in `frontend/` (module catalog + WalletConnect config; no live wallet). `pocContractId` from `frontend/.env.local` at export time.",
   summary: {
     passed: totalPassed,
     failed: totalFailed,
@@ -366,6 +522,7 @@ const payload = {
       tail: sanitizeTail(intBlock),
       tests: integrationTests,
     },
+    ...(frontendSuite ? [frontendSuite] : []),
   ],
 };
 
