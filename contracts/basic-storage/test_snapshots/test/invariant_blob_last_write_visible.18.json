@@ -7,6 +7,9 @@
   "auth": [
     [],
     [],
+    [],
+    [],
+    [],
     []
   ],
   "ledger": {
@@ -49,7 +52,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "5998f78ddd99cbebfab3340b552ae8f99bea584f96c0"
+                  "bytes": "caeeb818f6390ec95d799e1eb7c3d329"
                 }
               }
             },

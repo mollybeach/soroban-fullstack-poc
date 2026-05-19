@@ -138,6 +138,13 @@ const DEFAULT_CATEGORIES: TestCategory[] = [
     tool: "cargo llvm-cov",
     description: "Line/function reports.",
   },
+  {
+    id: "frontend_wallet",
+    title: "Frontend wallet (Vitest)",
+    tool: "vitest run",
+    description:
+      "Stellar Wallets Kit catalog + WalletConnect env/QR config (no live wallet connections).",
+  },
 ];
 
 const FALLBACK: TestResultsPayload = {
@@ -145,7 +152,7 @@ const FALLBACK: TestResultsPayload = {
   generatedAt: new Date(0).toISOString(),
   success: true,
   pocContractId: null,
-  summary: { passed: 38, failed: 0, ignored: 0 },
+  summary: { passed: 63, failed: 0, ignored: 0 },
   categories: DEFAULT_CATEGORIES,
   externalRuns: [
     {
@@ -182,6 +189,18 @@ const FALLBACK: TestResultsPayload = {
       tail: "",
       tests: [],
     },
+    {
+      id: "frontend-wallet",
+      name: "Frontend wallet tests (Vitest)",
+      path: "frontend/lib/wallet-kit-config.test.ts",
+      description:
+        "WalletConnect + all default SWK wallets (run `make test-frontend` or `make sync-tests`).",
+      passed: 25,
+      failed: 0,
+      ok: true,
+      tail: "",
+      tests: [],
+    },
   ],
 };
 
@@ -203,7 +222,26 @@ const KIND_BADGE: Record<string, string> = {
   property: "bg-sky-100 text-sky-900 ring-sky-200",
   proptest_random: "bg-amber-100 text-amber-950 ring-amber-200",
   invariant: "bg-fuchsia-100 text-fuchsia-950 ring-fuchsia-200",
+  frontend_wallet: "bg-teal-100 text-teal-950 ring-teal-200",
 };
+
+/** Scroll to the on-page anchor for a test category card (`test-kind-*`). */
+function scrollToTestKind(kindId: string) {
+  const el = document.getElementById(`test-kind-${kindId}`);
+  if (el) {
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (kindId === "integration") {
+    document.getElementById("test-kind-integration")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (kindId === "frontend_wallet") {
+    document.getElementById("test-kind-frontend_wallet")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  document.getElementById("test-kind-lib")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 export default function TestsPage() {
   const [data, setData] = useState<TestResultsPayload | null>(null);
@@ -330,7 +368,11 @@ export default function TestsPage() {
               <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800 ring-1 ring-slate-200/80">
                 cargo llvm-cov
               </code>{" "}
-              for <strong className="font-semibold text-slate-900">basic-storage</strong>.{" "}
+              for <strong className="font-semibold text-slate-900">basic-storage</strong>, plus{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800 ring-1 ring-slate-200/80">
+                vitest
+              </code>{" "}
+              for <strong className="font-semibold text-slate-900">wallet / WalletConnect</strong>.{" "}
               <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800 ring-1 ring-slate-200/80">
                 make test-all-contract
               </code>{" "}
@@ -505,9 +547,11 @@ export default function TestsPage() {
               countLabel = `${n} case${n === 1 ? "" : "s"}`;
             }
             return (
-              <article
+              <button
                 key={c.id}
-                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                type="button"
+                onClick={() => scrollToTestKind(c.id)}
+                className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-300 hover:bg-violet-50/30 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-bold text-slate-900">{c.title}</h3>
@@ -519,13 +563,14 @@ export default function TestsPage() {
                 </div>
                 <code className="mt-2 block text-xs text-violet-700">{c.tool}</code>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{c.description}</p>
-              </article>
+                <span className="mt-3 text-xs font-medium text-violet-600">Jump to section ↓</span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div id="test-kind-llvm_coverage" className="scroll-mt-24 space-y-4">
         <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
           <PieChart className="h-5 w-5 text-violet-600" aria-hidden />
           LLVM line coverage
@@ -624,7 +669,7 @@ export default function TestsPage() {
         ) : null}
       </div>
 
-      <div className="space-y-4">
+      <div id="test-kind-libfuzzer" className="scroll-mt-24 space-y-4">
         <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
           <Bug className="h-5 w-5 text-amber-600" aria-hidden />
           libFuzzer (outside cargo test)
@@ -671,7 +716,7 @@ export default function TestsPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div id="test-kind-invariant" className="scroll-mt-24 space-y-4">
         <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
           <ShieldCheck className="h-5 w-5 text-fuchsia-600" aria-hidden />
           Invariant tests (at a glance)
@@ -734,10 +779,21 @@ export default function TestsPage() {
           Cargo test suites — each case
         </h2>
         <div className="grid gap-6">
-          {d.suites.map((suite) => (
+          {d.suites.map((suite) => {
+            const suiteAnchorId =
+              suite.id === "integration"
+                ? "test-kind-integration"
+                : suite.id === "frontend-wallet"
+                  ? "test-kind-frontend_wallet"
+                  : suite.id === "lib"
+                    ? "test-kind-lib"
+                    : undefined;
+            const seenKinds = new Set<string>();
+            return (
             <article
               key={suite.id}
-              className={`rounded-2xl border-2 p-6 shadow-sm transition ${
+              id={suiteAnchorId}
+              className={`scroll-mt-24 rounded-2xl border-2 p-6 shadow-sm transition ${
                 suite.ok && suite.failed === 0
                   ? "border-emerald-200/90 bg-white"
                   : "border-rose-200 bg-rose-50/50"
@@ -792,8 +848,17 @@ export default function TestsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {suite.tests.map((t) => (
-                        <tr key={t.id} className="border-b border-slate-100 bg-white last:border-0">
+                      {suite.tests.map((t) => {
+                        const isFirstOfKindInLib =
+                          suite.id === "lib" && !seenKinds.has(t.kind);
+                        if (isFirstOfKindInLib) seenKinds.add(t.kind);
+                        const rowAnchorId = isFirstOfKindInLib ? `test-kind-${t.kind}` : undefined;
+                        return (
+                        <tr
+                          key={t.id}
+                          id={rowAnchorId}
+                          className="scroll-mt-24 border-b border-slate-100 bg-white last:border-0"
+                        >
                           <td className="px-3 py-3 align-top">
                             {t.outcome === "passed" ? (
                               <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-label="passed" />
@@ -817,7 +882,8 @@ export default function TestsPage() {
                             {t.detail}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -836,7 +902,8 @@ export default function TestsPage() {
                 </pre>
               ) : null}
             </article>
-          ))}
+            );
+          })}
         </div>
       </div>
 

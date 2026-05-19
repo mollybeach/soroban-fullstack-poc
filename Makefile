@@ -18,7 +18,7 @@ else
 FUZZ_SAN_FLAGS :=
 endif
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend contract-interface-json contract-bindings check ci ci-coverage clean clean-frontend stellar-identity deploy dev-frontend
+.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend contract-interface-json contract-bindings check ci ci-coverage clean clean-frontend stellar-identity deploy dev dev-frontend test-frontend sync-frontend-tests
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -42,7 +42,13 @@ fmt-check: ## Check Rust formatting without modifying files
 contract-test: ## Run cargo test in contracts/basic-storage (unit + integration + proptest)
 	cd $(CONTRACT_DIR) && cargo test
 
-test: contract-test ## Alias: run contract tests (POC deliverable naming)
+test: contract-test ## Run Rust contract tests (not frontend; use test-frontend for Vitest)
+
+test-frontend: ## Run frontend Vitest (WalletConnect + all SWK wallet catalog) — needs install-frontend once
+	cd "$(FRONTEND_DIR)" && npm test
+
+sync-frontend-tests: test-frontend ## Run Vitest and merge results into frontend/public/test-results.json
+	node "$(REPO_ROOT)/scripts/export-frontend-wallet-results.mjs"
 
 contract-integration: ## Run only integration tests (tests/*.rs)
 	cd $(CONTRACT_DIR) && cargo test --test integration_contract
@@ -159,6 +165,8 @@ stellar-identity: ## Create and fund default testnet identity if missing (overri
 
 deploy: ## Deploy to testnet (needs stellar; run stellar-identity once; optional SOURCE_ACCOUNT=my-alias)
 	$(REPO_ROOT)/scripts/deploy-testnet.sh $(SOURCE_ACCOUNT)
+
+dev: dev-frontend ## Alias: Next.js dev server at http://localhost:3000
 
 dev-frontend: ## Start Next dev server (install-frontend first if needed)
 	cd $(FRONTEND_DIR) && npm run dev

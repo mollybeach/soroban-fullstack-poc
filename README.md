@@ -287,7 +287,7 @@ Pipe or redirect to a file as needed, or run **`make contract-interface-json`** 
 
 # Deploy to Stellar Testnet
 
-You must have the **[Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli)** installed. Deploy calls `stellar contract build` and `stellar contract deploy` (not plain Cargo).
+You must have the **[Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/install-cli)** installed. Deploy calls `stellar contract build` and `stellar contract deploy` (not plain Cargo)
 
 ## Source account (identity)
 
