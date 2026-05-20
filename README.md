@@ -350,7 +350,7 @@ npm run dev
 
 Set `NEXT_PUBLIC_CONTRACT_ID` in `frontend/.env.local` (see `frontend/.env.example`). For **WalletConnect** inside Stellar Wallets Kit, set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [Reown Cloud](https://dashboard.reown.com/) and add your dev origin (e.g. `http://localhost:3000`) to the project’s allowed domains.
 
-**Mobile WalletConnect QA:** verified Freighter QR pairing is documented in [`docs/WalletConnect-Mobile-Success-Log.md`](docs/WalletConnect-Mobile-Success-Log.md) (screenshots in `frontend/public/`, also on the in-app `/docs` page). Testnet account for that session: `GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI`.
+**Mobile WalletConnect QA:** verified Freighter / LOBSTR QR pairing is on [`/tests/mobilewallet`](https://soroban-fullstack-poc.vercel.app/tests/mobilewallet) and [`docs/WalletConnect-Mobile-Success-Log.md`](docs/WalletConnect-Mobile-Success-Log.md). Freighter testnet account: `GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI`.
 
 If `next build` fails with **`Cannot find module './cjs/react.production.js'`**, your `node_modules` tree is incomplete. From the repo root run **`make install-frontend`** or **`make build-frontend`** (the Makefile refreshes deps when that file is missing), or remove modules with **`make clean-frontend`** and install again.
 

@@ -959,7 +959,7 @@ export default function HomePage() {
     writeInFlightRef.current = true;
     setWritePending(true);
     setStatus("Signing and submitting…");
-    appendLog("info", `set(${value}): awaiting signature in Freighter…`);
+    appendLog("info", `set(${value}): awaiting wallet signature…`);
     try {
       const sent = await writeStoredU32(value, pk, signTx);
       appendLog(
@@ -997,7 +997,7 @@ export default function HomePage() {
     writeInFlightRef.current = true;
     setWritePending(true);
     setStatus("Signing set_signed…");
-    appendLog("info", `set_signed(${v}): awaiting Freighter…`);
+    appendLog("info", `set_signed(${v}): awaiting wallet signature…`);
     try {
       const sent = await writeSigned(v, pk, signTx);
       appendLog("ok", `set_signed submitted. Result: ${String(sent.result)}`);
@@ -1024,7 +1024,7 @@ export default function HomePage() {
     writeInFlightRef.current = true;
     setWritePending(true);
     setStatus("Signing set_tag…");
-    appendLog("info", `set_tag(${JSON.stringify(tagInput)}): awaiting Freighter…`);
+    appendLog("info", `set_tag(${JSON.stringify(tagInput)}): awaiting wallet signature…`);
     try {
       const sent = await writeTag(tagInput, pk, signTx);
       appendLog("ok", `set_tag submitted. Result: ${String(sent.result)}`);
@@ -1058,7 +1058,7 @@ export default function HomePage() {
     writeInFlightRef.current = true;
     setWritePending(true);
     setStatus("Signing set_counter…");
-    appendLog("info", `set_counter(${n}): awaiting Freighter…`);
+    appendLog("info", `set_counter(${n}): awaiting wallet signature…`);
     try {
       const sent = await writeCounter(n, pk, signTx);
       appendLog("ok", `set_counter submitted. Result: ${String(sent.result)}`);

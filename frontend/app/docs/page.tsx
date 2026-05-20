@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -27,62 +26,6 @@ function Section({
         {children}
       </div>
     </section>
-  );
-}
-
-/** Compact thumbnail for WalletConnect screenshot dock grids on this page. */
-function WcScreenshotCard({
-  src,
-  alt,
-  caption,
-  wide,
-}: {
-  src: string;
-  alt: string;
-  caption: ReactNode;
-  wide?: boolean;
-}) {
-  return (
-    <figure
-      className={`flex flex-col overflow-hidden rounded-xl border border-violet-100 bg-slate-50 shadow-sm ${
-        wide ? "sm:col-span-2" : ""
-      }`}
-    >
-      <div className="flex min-h-[9rem] items-center justify-center bg-gradient-to-b from-slate-100 to-slate-50 p-2 sm:min-h-[10rem]">
-        <Image
-          src={src}
-          alt={alt}
-          width={360}
-          height={480}
-          className="max-h-36 w-auto max-w-full object-contain sm:max-h-40"
-          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
-        />
-      </div>
-      <figcaption className="border-t border-violet-50 px-2 py-1.5 text-[10px] leading-snug text-slate-600 sm:text-xs">
-        {caption}
-      </figcaption>
-    </figure>
-  );
-}
-
-function WcScreenshotDock({
-  title,
-  children,
-  columns = 3,
-}: {
-  title: string;
-  children: ReactNode;
-  columns?: 2 | 3;
-}) {
-  const gridClass =
-    columns === 2
-      ? "grid grid-cols-2 gap-2 sm:gap-3"
-      : "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-3";
-  return (
-    <div className="mt-5">
-      <h3 className="text-sm font-semibold text-violet-900">{title}</h3>
-      <div className={`${gridClass} mt-2`}>{children}</div>
-    </div>
   );
 }
 
@@ -486,114 +429,16 @@ export default function DocsPage() {
 
       <Section id="walletconnect-mobile-success" title="WalletConnect mobile (verified)">
         <p>
-          We verified a <strong>mobile WalletConnect</strong> session to this POC using{" "}
-          <strong>Freighter on a phone</strong>: scan the desktop QR with Freighter&apos;s{" "}
-          <strong>in-app</strong> WalletConnect scanner (not the iPhone Camera app — that often opens
-          MetaMask). Full write-up and transaction table:{" "}
-          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>{" "}
-          in the repository.
-        </p>
-        <p>
-          <strong>Connected testnet account:</strong>{" "}
-          <code className="break-all rounded bg-slate-100 px-1 text-xs sm:text-sm">
-            GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI
-          </code>
-        </p>
-        <p>
-          <a
-            href="https://stellar.expert/explorer/testnet/account/GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI"
+          Screenshots, testnet tx links, and LOBSTR / Freighter QR proof live on the{" "}
+          <Link
+            href="/tests/mobilewallet"
             className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
           >
-            View account on Stellar Expert (testnet)
-          </a>
-        </p>
-
-        <WcScreenshotDock title="Mobile flow (pair → sign)" columns={3}>
-          <WcScreenshotCard
-            src="/scanningwalletconnectonphone.jpg"
-            alt="Freighter mobile scanning desktop WalletConnect QR"
-            caption={
-              <>
-                <span className="font-medium text-violet-800">1. Scan</span> — in Freighter, not Camera.
-              </>
-            }
-          />
-          <WcScreenshotCard
-            src="/successfulSorobanfullstackpocconnectiononphone.jpg"
-            alt="Soroban Fullstack POC connection successful on Freighter mobile"
-            caption={
-              <>
-                <span className="font-medium text-violet-800">2. Connected</span>
-              </>
-            }
-          />
-          <WcScreenshotCard
-            src="/mobilescreenshotyoucanseetransactionset()withmobilewallet.PNG"
-            alt="Freighter confirm set() for soroban-fullstack-poc.vercel.app"
-            caption={
-              <>
-                <span className="font-medium text-violet-800">3. Confirm</span>{" "}
-                <code className="rounded bg-slate-100 px-0.5">set()</code>
-              </>
-            }
-          />
-          <WcScreenshotCard
-            src="/transactionsuccessfullysignmobiledwallet.PNG"
-            alt="Transaction successfully signed on Freighter mobile"
-            caption={
-              <>
-                <span className="font-medium text-violet-800">4. Signed</span>
-              </>
-            }
-          />
-        </WcScreenshotDock>
-
-        <WcScreenshotDock title="Block explorer (desktop)" columns={2}>
-          <WcScreenshotCard
-            src="/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png"
-            alt="Stellar Expert showing GBOE address invoked set on contract"
-            wide
-            caption={
-              <>
-                <span className="font-medium text-violet-800">Stellar Expert</span> —{" "}
-                <code className="rounded bg-slate-100 px-0.5">set(0)</code> and{" "}
-                <code className="rounded bg-slate-100 px-0.5">set(42)</code> from mobile wallet. Click a row for the tx URL.
-              </>
-            }
-          />
-        </WcScreenshotDock>
-
-        <p className="mt-4 text-sm text-slate-600">
-          On <strong>Stellar Expert (testnet)</strong>, filter by contract (<code className="rounded bg-slate-100 px-1">CBGX…6O2R</code>), click the invoke row, and copy{" "}
-          <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
-        </p>
-
-        <h3 className="mt-6 text-base font-semibold text-violet-900">6. Verified transaction links</h3>
-        <ul className="list-inside list-disc space-y-2 marker:text-violet-500">
-          <li>
-            <code className="rounded bg-slate-100 px-1 text-xs">set(42 u32)</code> —{" "}
-            <a
-              href="https://stellar.expert/explorer/testnet/tx/a9a96caf69334fb937b4ce144d03a0996749d896a4acdd7b95b32eaf8c82f29b"
-              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
-            >
-              Stellar Expert tx
-            </a>{" "}
-            (2026-05-20 15:00:38 UTC)
-          </li>
-          <li>
-            <code className="rounded bg-slate-100 px-1 text-xs">set(0 u32)</code> —{" "}
-            <a
-              href="https://stellar.expert/explorer/testnet/tx/2833e7300a51d2ec713b0e411fa6f2854537b8161d0afaab53fe007e109eac2f"
-              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
-            >
-              Stellar Expert tx
-            </a>{" "}
-            (2026-05-20 15:00:03 UTC)
-          </li>
-        </ul>
-        <p className="text-sm text-slate-600">
-          Full table and screenshots:{" "}
-          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>
+            Contract tests → mobile wallet
+          </Link>{" "}
+          (<code className="rounded bg-slate-100 px-1">/tests/mobilewallet</code>), next to
+          Vitest wallet rows. Repo copy:{" "}
+          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>.
         </p>
       </Section>
 
@@ -604,8 +449,19 @@ export default function DocsPage() {
             set <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_CONTRACT_ID</code> to the new id.
           </li>
           <li>
-            <strong>Submits fail immediately</strong> — Fund the Freighter account on testnet; “connected”
-            only means the extension returned an address.
+            <strong>Submits fail immediately</strong> — Fund the connected account on <strong>testnet</strong> via{" "}
+            <a
+              href="https://friendbot.stellar.org/"
+              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            >
+              Friendbot
+            </a>
+            ; “connected” only means WalletConnect or the extension returned an address.
+          </li>
+          <li>
+            <strong>LOBSTR: Account not found</strong> — LOBSTR connect can work on mainnet-funded keys; this app
+            submits to <strong>testnet</strong>. Turn on testnet in LOBSTR and Friendbot-fund your{" "}
+            <code className="rounded bg-slate-100 px-1">G…</code> on testnet (separate from mainnet XLM).
           </li>
           <li>
             <strong>Hosted build shows not configured</strong> — Set the same env var in Vercel (or

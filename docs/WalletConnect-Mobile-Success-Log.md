@@ -1,19 +1,57 @@
-# WalletConnect mobile — successful connection & writes log
+# WalletConnect mobile — Freighter & LOBSTR success log
 
-This document records a **verified end-to-end WalletConnect pairing** and **signed Soroban writes** from **Freighter mobile** to the **Soroban Fullstack POC** on **Stellar testnet**.
+This document records **verified WalletConnect flows** from the **Soroban Fullstack POC** (desktop browser / Vercel) to **mobile Stellar wallets**:
+
+| Path | What we verified |
+|------|------------------|
+| **WalletConnect → LOBSTR** | QR / WC pairing; connection request + success for `soroban-fullstack-poc.vercel.app` |
+| **WalletConnect → Freighter** | QR scan, connect, `set()` confirm/sign, and Stellar Expert tx proof on testnet |
+
+Not MetaMask or other EVM wallets.
 
 **Live app:** [soroban-fullstack-poc.vercel.app](https://soroban-fullstack-poc.vercel.app)  
 **Network:** `stellar:testnet` via Stellar Wallets Kit + Reown WalletConnect.
 
 ---
 
-## Connected wallet
+## LOBSTR — WalletConnect connect (mobile QR)
+
+| Field | Value |
+|--------|--------|
+| **Path** | **WalletConnect** (desktop POC) → **LOBSTR** (mobile) |
+| **Wallet app** | LOBSTR (mobile) |
+| **dApp** | Soroban Fullstack POC / `soroban-fullstack-poc.vercel.app` |
+| **Account shown in UI** | `GDYQK…N52LXW` (approve on connection request screen) |
+| **Result** | “Soroban Fullstack POC connection successful” — return to browser |
+
+Use **Settings → WalletConnect** in LOBSTR to scan the desktop QR (not the phone Camera app).
+
+**Writes failing with `Account not found`?** The POC uses **testnet** only. LOBSTR can show “connection successful” while your `G…` exists on **mainnet** but not testnet. Fix: LOBSTR → **Testnet** on, then fund the same address on testnet: [Friendbot](https://friendbot.stellar.org/?addr=GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW) (one-time per `G…` on testnet).
+
+### Screenshots (WalletConnect → LOBSTR)
+
+#### Connection request
+
+![LOBSTR WalletConnect connection request](../frontend/public/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG)
+
+Web: `/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG`
+
+#### Connection successful
+
+![LOBSTR WalletConnect connection successful](../frontend/public/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG)
+
+Web: `/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG`
+
+---
+
+## Freighter — WalletConnect connect, sign, and explorer
 
 | Field | Value |
 |--------|--------|
 | **Public key** | `GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI` |
-| **Wallet app** | Freighter (mobile) |
-| **Connection** | WalletConnect — scan QR from desktop modal |
+| **Path** | **WalletConnect** (desktop dApp) → **Freighter** (mobile) |
+| **Wallet app** | Freighter (mobile) — paired via WalletConnect |
+| **Connection** | WalletConnect QR / URI from POC → Freighter in-app scanner |
 | **dApp** | Soroban Fullstack POC / `soroban-fullstack-poc.vercel.app` |
 | **Contract (explorer filter)** | `CBGX…6O2R` — full **C…** id on [Stellar Expert contract page](https://stellar.expert/explorer/testnet/contract) when you click the contract chip in the UI |
 
@@ -72,9 +110,11 @@ Fee summary (from explorer): refundable 411, non-refundable 6,715 stroops; 1 emi
 
 ---
 
-## Screenshots
+## Screenshots (WalletConnect → Freighter)
 
-### WalletConnect pairing
+Every image in this section is **WalletConnect on the POC** connecting to or signing in **Freighter mobile**.
+
+### WalletConnect pairing (Freighter)
 
 #### Scan QR (Freighter mobile)
 
@@ -88,7 +128,7 @@ Web: `/scanningwalletconnectonphone.jpg`
 
 Web: `/successfulSorobanfullstackpocconnectiononphone.jpg`
 
-### Mobile sign flow (`set()` write)
+### Mobile sign flow in Freighter (`set()` via WalletConnect)
 
 #### Confirm transaction (Test Net, fee ~0.006 XLM)
 
@@ -112,14 +152,14 @@ Web: `/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressuce
 
 ## Checklist
 
-| Step | Status |
-|------|--------|
-| WalletConnect QR scan inside Freighter | ✅ |
-| dApp connected on phone | ✅ |
-| Mobile confirm `set()` on testnet | ✅ |
-| Mobile “Transaction successfully signed!” | ✅ |
-| Explorer shows `GBOE…YNRI` → `set(0)` and `set(42)` on contract | ✅ |
-| Transaction links captured in table above | ✅ |
+| Step | LOBSTR | Freighter |
+|------|--------|-----------|
+| WalletConnect pairing from in-app scanner | ✅ | ✅ |
+| dApp shows connected on phone | ✅ | ✅ |
+| Mobile confirm `set()` on testnet | — | ✅ |
+| Mobile “Transaction successfully signed!” | — | ✅ |
+| Explorer shows writes on contract | — | ✅ (`set(0)`, `set(42)`) |
+| Transaction links in table above | — | ✅ |
 
 ---
 
@@ -134,11 +174,11 @@ Web: `/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressuce
 
 ## Related docs
 
-- In-app: `/docs` → **WalletConnect mobile (verified)**  
+- In-app: [`/tests/mobilewallet`](https://soroban-fullstack-poc.vercel.app/tests/mobilewallet) → **WalletConnect mobile (verified)** (screenshots + tx links)  
 - `docs/Meeting-Talking-Points-May-19-2026.md`  
 - `docs/RecentWork-SorobanPOC-May2026.md`  
 - `README.md`
 
 ---
 
-*Last updated: 2026-05-20 — connection + `set(0)` / `set(42)` writes verified on testnet.*
+*Last updated: 2026-05-20 — LOBSTR WalletConnect connect + Freighter connect/sign/explorer verified on testnet.*

@@ -16,8 +16,13 @@ import {
   Terminal,
   XCircle,
 } from "lucide-react";
+import { WalletConnectMobileVerification } from "@/components/WalletConnectMobileVerification";
 import { formatUnknownError } from "@/lib/format-unknown-error";
 import { stellarExpertContractUrl } from "@/lib/stellar";
+import {
+  scheduleScrollToMobileWalletVerification,
+  scrollToMobileWalletVerification,
+} from "@/lib/tests-scroll";
 
 type TestCaseRow = {
   id: string;
@@ -237,13 +242,22 @@ function scrollToTestKind(kindId: string) {
     return;
   }
   if (kindId === "frontend_wallet") {
-    document.getElementById("test-kind-frontend_wallet")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (document.getElementById("walletconnect-mobile-verified")) {
+      scrollToMobileWalletVerification();
+    } else {
+      document.getElementById("test-kind-frontend_wallet")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
     return;
   }
   document.getElementById("test-kind-lib")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-export default function TestsPage() {
+export default function TestsPage({
+  scrollToMobileWalletOnMount = false,
+}: {
+  /** Set by `/tests/mobilewallet` so the URL opens on the WalletConnect screenshot section. */
+  scrollToMobileWalletOnMount?: boolean;
+}) {
   const [data, setData] = useState<TestResultsPayload | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [cov, setCov] = useState<CoverageSummaryPayload | null>(null);
@@ -306,6 +320,16 @@ export default function TestsPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (scrollToMobileWalletOnMount) {
+      return scheduleScrollToMobileWalletVerification();
+    }
+    if (window.location.hash === "#walletconnect-mobile-verified") {
+      return scheduleScrollToMobileWalletVerification();
+    }
+    return undefined;
+  }, [scrollToMobileWalletOnMount]);
 
   const d = useMemo(() => normalizePayload(data ?? FALLBACK), [data]);
   const generated = new Date(d.generatedAt);
@@ -906,6 +930,8 @@ export default function TestsPage() {
           })}
         </div>
       </div>
+
+      <WalletConnectMobileVerification />
 
       <div className="rounded-3xl border border-violet-100 bg-white/90 p-6 shadow-md sm:p-8">
         <h2 className="flex items-center gap-2 text-lg font-bold text-violet-950">
