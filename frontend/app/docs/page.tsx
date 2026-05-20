@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -424,6 +425,69 @@ export default function DocsPage() {
           is a placeholder for a screen recording (drop{" "}
           <code className="rounded bg-slate-100 px-1">frontend/public/demo/recording.mp4</code>). It
           does not change chain state.
+        </p>
+      </Section>
+
+      <Section id="walletconnect-mobile-success" title="WalletConnect mobile (verified)">
+        <p>
+          We verified a <strong>mobile WalletConnect</strong> session to this POC using{" "}
+          <strong>Freighter on a phone</strong>: scan the desktop QR with Freighter&apos;s{" "}
+          <strong>in-app</strong> WalletConnect scanner (not the iPhone Camera app — that often opens
+          MetaMask). Full write-up and transaction table:{" "}
+          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>{" "}
+          in the repository.
+        </p>
+        <p>
+          <strong>Connected testnet account:</strong>{" "}
+          <code className="break-all rounded bg-slate-100 px-1 text-xs sm:text-sm">
+            GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI
+          </code>
+        </p>
+        <p>
+          <a
+            href="https://stellar.expert/explorer/testnet/account/GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI"
+            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+          >
+            View account on Stellar Expert (testnet)
+          </a>
+        </p>
+
+        <h3 className="mt-6 text-base font-semibold text-violet-900">1. Scan QR inside Freighter</h3>
+        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
+          <Image
+            src="/scanningwalletconnectonphone.jpg"
+            alt="Freighter mobile WalletConnect scanner pointed at the desktop Soroban Fullstack POC QR code"
+            width={1200}
+            height={900}
+            className="h-auto w-full"
+            priority={false}
+          />
+          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
+            Scan the desktop QR from Freighter → WalletConnect (avoid MetaMask / phone Camera).
+          </figcaption>
+        </figure>
+
+        <h3 className="mt-8 text-base font-semibold text-violet-900">2. Connection success on phone</h3>
+        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
+          <Image
+            src="/successfulSorobanfullstackpocconnectiononphone.jpg"
+            alt="Freighter mobile showing Soroban Fullstack POC WalletConnect connection successful"
+            width={1200}
+            height={900}
+            className="h-auto w-full"
+            priority={false}
+          />
+          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
+            Phone confirms pairing; return to the browser to submit Soroban writes.
+          </figcaption>
+        </figure>
+
+        <h3 className="mt-8 text-base font-semibold text-violet-900">3. Transaction log (document writes here)</h3>
+        <p>
+          After you run writes on <Link href="/">Home</Link>, add each transaction hash to{" "}
+          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>{" "}
+          (table section). That file is the canonical audit trail for this wallet + WalletConnect
+          path.
         </p>
       </Section>
 
