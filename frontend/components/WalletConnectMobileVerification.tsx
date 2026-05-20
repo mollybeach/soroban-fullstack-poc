@@ -16,21 +16,21 @@ function WcScreenshotCard({
 }) {
   return (
     <figure
-      className={`flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm ${
+      className={`group relative z-0 flex cursor-zoom-in flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:z-50 hover:scale-[1.45] hover:overflow-visible hover:shadow-2xl hover:ring-2 hover:ring-slate-300/90 ${
         wide ? "sm:col-span-2" : ""
       }`}
     >
-      <div className="flex min-h-[9rem] items-center justify-center bg-gradient-to-b from-slate-100 to-slate-50 p-2 sm:min-h-[10rem]">
+      <div className="flex min-h-[9rem] items-center justify-center bg-gradient-to-b from-slate-100 to-slate-50 p-2 transition-[min-height,padding] duration-300 ease-out group-hover:min-h-[18rem] group-hover:p-4 sm:min-h-[10rem] sm:group-hover:min-h-[22rem]">
         <Image
           src={src}
           alt={alt}
           width={360}
           height={480}
-          className="max-h-36 w-auto max-w-full object-contain sm:max-h-40"
+          className="max-h-36 w-auto max-w-full origin-center object-contain transition-transform duration-300 ease-out will-change-transform group-hover:max-h-[min(70vh,28rem)] group-hover:scale-110 sm:max-h-40 sm:group-hover:max-h-[min(75vh,32rem)]"
           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
         />
       </div>
-      <figcaption className="border-t border-slate-100 px-2 py-1.5 text-[10px] leading-snug text-slate-600 sm:text-xs">
+      <figcaption className="border-t border-slate-100 bg-slate-50 px-2 py-1.5 text-[10px] leading-snug text-slate-600 sm:text-xs">
         {caption}
       </figcaption>
     </figure>
@@ -97,10 +97,10 @@ function WcScreenshotDock({
 }) {
   const gridClass =
     columns === 2
-      ? "grid grid-cols-2 gap-2 sm:gap-3"
-      : "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-3";
+      ? "grid grid-cols-2 items-start gap-3 overflow-visible sm:gap-4"
+      : "grid grid-cols-2 items-start gap-3 overflow-visible sm:grid-cols-3 sm:gap-4 lg:grid-cols-4";
   return (
-    <div className="mt-5">
+    <div className="mt-5 overflow-visible">
       <h4 className="text-base font-semibold text-slate-800 sm:text-lg">{title}</h4>
       <div className={`${gridClass} mt-2`}>{children}</div>
     </div>
@@ -112,7 +112,7 @@ export function WalletConnectMobileVerification() {
   return (
     <section
       id="walletconnect-mobile-verified"
-      className="scroll-mt-24 rounded-3xl border border-teal-200/80 bg-white p-6 shadow-md sm:p-8"
+      className="scroll-mt-24 overflow-visible rounded-3xl border border-teal-200/80 bg-white p-6 shadow-md sm:p-8"
     >
       <p className="text-xs font-semibold uppercase tracking-widest text-teal-700">
         Manual QA ·{" "}
@@ -174,7 +174,7 @@ export function WalletConnectMobileVerification() {
         />
       </WcScreenshotDock>
 
-      <WcScreenshotDock title="WalletConnect → Freighter: scan, connect & sign" columns={3}>
+      <WcScreenshotDock title="WalletConnect → Freighter: scan & connect" columns={2}>
         <WcScreenshotCard
           src="/freighterscanQRcode.jpg"
           alt="Freighter scan QR code — WalletConnect scanner in Freighter app"
@@ -205,13 +205,15 @@ export function WalletConnectMobileVerification() {
             </>
           }
         />
+      </WcScreenshotDock>
+      <WcScreenshotDock title="Freighter: sign Soroban write (testnet)" columns={2}>
         <WcScreenshotCard
           src="/mobilescreenshotyoucanseetransactionset()withmobilewallet.PNG"
           alt="Freighter confirm set() — Soroban Fullstack POC transaction"
           caption={
             <>
-              <span className="font-medium text-violet-800">5. Confirm</span> — approve{" "}
-              <code className="rounded bg-slate-100 px-0.5">set()</code> on testnet.
+              <span className="font-medium text-violet-800">5. Signature request</span> — Soroban Fullstack POC
+              wants you to approve <code className="rounded bg-slate-100 px-0.5">set()</code> on testnet.
             </>
           }
         />
@@ -220,32 +222,35 @@ export function WalletConnectMobileVerification() {
           alt="Freighter transaction signed successfully"
           caption={
             <>
-              <span className="font-medium text-violet-800">6. Signed</span> — transaction approved in Freighter.
+              <span className="font-medium text-violet-800">6. Transaction confirmed</span> — Freighter confirms
+              the Soroban write after you approve.
             </>
           }
         />
       </WcScreenshotDock>
-
-      <WcScreenshotDock title="After Freighter sign — Stellar Expert (desktop)" columns={2}>
+      <WcScreenshotDock title="Freighter writes on Stellar Expert (desktop)" columns={2}>
         <WcScreenshotCard
           src="/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png"
-          alt="Stellar Expert contract invokes from mobile wallet"
+          alt="Stellar Expert testnet showing Freighter wallet GBOE invoked set on contract CBGX"
           wide
           caption={
             <>
-              <span className="font-medium text-violet-800">Explorer</span> —{" "}
-              <code className="rounded bg-slate-100 px-0.5">set(0)</code> /{" "}
-              <code className="rounded bg-slate-100 px-0.5">set(42)</code>; click row for tx URL.
+              <span className="font-medium text-violet-800">7. Block explorer</span> —{" "}
+              <code className="rounded bg-slate-100 px-0.5">GBOE…YNRI</code> invoked{" "}
+              <code className="rounded bg-slate-100 px-0.5">set</code> on contract{" "}
+              <code className="rounded bg-slate-100 px-0.5">CBGX…6O2R</code> (e.g.{" "}
+              <code className="rounded bg-slate-100 px-0.5">set(0 u32)</code>,{" "}
+              <code className="rounded bg-slate-100 px-0.5">set(42 u32)</code>). Click a row for the tx URL.
             </>
           }
         />
       </WcScreenshotDock>
-
-      <p className="mt-4 text-sm text-slate-600">
-        On Stellar Expert (testnet), filter by contract (<code className="rounded bg-slate-100 px-1">CBGX…6O2R</code>
-        ), click the invoke row, copy{" "}
-        <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>
-        .
+      <p className="mt-3 text-sm text-slate-600">
+        Freighter account{" "}
+        <code className="rounded bg-slate-100 px-1 text-xs">GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI</code>
+        : use <strong>Test Net</strong> in Freighter before connecting. On Stellar Expert (testnet), filter by contract, click
+        the invoke row, copy{" "}
+        <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
       </p>
 
       <WalletSectionHeading
