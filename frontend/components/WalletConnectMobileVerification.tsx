@@ -16,17 +16,23 @@ function WcScreenshotCard({
 }) {
   return (
     <figure
-      className={`group relative z-0 flex cursor-zoom-in flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-[transform,box-shadow] duration-300 ease-out hover:z-50 hover:scale-[1.45] hover:overflow-visible hover:shadow-2xl hover:ring-2 hover:ring-slate-300/90 ${
+      className={`group relative z-0 flex cursor-zoom-in flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm transition-[box-shadow] duration-300 ease-out hover:z-50 hover:shadow-2xl hover:ring-2 hover:ring-slate-300/90 ${
         wide ? "sm:col-span-2" : ""
       }`}
     >
-      <div className="flex min-h-[9rem] items-center justify-center bg-gradient-to-b from-slate-100 to-slate-50 p-2 transition-[min-height,padding] duration-300 ease-out group-hover:min-h-[18rem] group-hover:p-4 sm:min-h-[10rem] sm:group-hover:min-h-[22rem]">
+      <div
+        className={`flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 p-2 transition-[height] duration-300 ease-out ${
+          wide
+            ? "h-36 sm:h-40 sm:group-hover:h-[min(52vh,22rem)]"
+            : "h-36 sm:h-40 sm:group-hover:h-[min(48vh,20rem)]"
+        } group-hover:h-52`}
+      >
         <Image
           src={src}
           alt={alt}
           width={360}
           height={480}
-          className="max-h-36 w-auto max-w-full origin-center object-contain transition-transform duration-300 ease-out will-change-transform group-hover:max-h-[min(70vh,28rem)] group-hover:scale-110 sm:max-h-40 sm:group-hover:max-h-[min(75vh,32rem)]"
+          className="max-h-full max-w-full object-contain"
           sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
         />
       </div>
@@ -146,7 +152,7 @@ export function WalletConnectMobileVerification() {
         subtitle="WalletConnect on testnet — scan QR in the Freighter app, then sign Soroban writes."
       />
       <p className="rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900 sm:text-sm">
-        <strong>Order:</strong> Freighter <strong>Settings → Network → Test Net</strong>, then WalletConnect scan in
+        <strong>Order:</strong> Freighter <strong>Settings → Network → Test Net</strong> (see steps 1–2 below), then WalletConnect scan in
         Freighter (not the iPhone Camera). Writes use testnet account{" "}
         <code className="rounded bg-slate-100 px-0.5 text-[10px] sm:text-xs">GBOE2WOJ…YNRI</code>.
       </p>
@@ -162,12 +168,21 @@ export function WalletConnectMobileVerification() {
       </p>
       <WcScreenshotDock title="Freighter: enable Test Net" columns={2}>
         <WcScreenshotCard
-          src="/howtofreighterwalletchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.jpg"
-          alt="Freighter Network screen with Test Net selected"
-          wide
+          src="/freightersettingsstepscreenshotforchangingtotestnetwork.jpg"
+          alt="Freighter Settings screen — open Network to change testnet"
           caption={
             <>
-              <span className="font-medium text-violet-800">1. Test Net</span> — Settings → Network → select{" "}
+              <span className="font-medium text-violet-800">1. Settings</span> — open Freighter{" "}
+              <strong>Settings</strong>, then tap <strong>Network</strong>.
+            </>
+          }
+        />
+        <WcScreenshotCard
+          src="/howtofreighterwalletchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.jpg"
+          alt="Freighter Network screen with Test Net selected"
+          caption={
+            <>
+              <span className="font-medium text-violet-800">2. Test Net</span> — on Network, select{" "}
               <strong>Test Net</strong>.
             </>
           }
@@ -180,7 +195,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter scan QR code — WalletConnect scanner in Freighter app"
           caption={
             <>
-              <span className="font-medium text-violet-800">2. Scan QR</span> — Freighter WalletConnect scanner
+              <span className="font-medium text-violet-800">3. Scan QR</span> — Freighter WalletConnect scanner
               (not iPhone Camera).
             </>
           }
@@ -190,7 +205,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter wallet connection request after scanning QR — Soroban Fullstack POC on Test Net"
           caption={
             <>
-              <span className="font-medium text-violet-800">3. Connection request</span> — after scanning QR;
+              <span className="font-medium text-violet-800">4. Connection request</span> — after scanning QR;
               Soroban Fullstack POC connection request on <strong>Test Net</strong>.
             </>
           }
@@ -200,7 +215,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter wallet connection success after connection request — connected to Soroban Fullstack POC"
           caption={
             <>
-              <span className="font-medium text-violet-800">4. Connection successful</span> — Freighter shows
+              <span className="font-medium text-violet-800">5. Connection successful</span> — Freighter shows
               connected; return to browser.
             </>
           }
@@ -212,7 +227,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter confirm set() — Soroban Fullstack POC transaction"
           caption={
             <>
-              <span className="font-medium text-violet-800">5. Signature request</span> — Soroban Fullstack POC
+              <span className="font-medium text-violet-800">6. Signature request</span> — Soroban Fullstack POC
               wants you to approve <code className="rounded bg-slate-100 px-0.5">set()</code> on testnet.
             </>
           }
@@ -222,7 +237,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter transaction signed successfully"
           caption={
             <>
-              <span className="font-medium text-violet-800">6. Transaction confirmed</span> — Freighter confirms
+              <span className="font-medium text-violet-800">7. Transaction confirmed</span> — Freighter confirms
               the Soroban write after you approve.
             </>
           }
@@ -235,7 +250,7 @@ export function WalletConnectMobileVerification() {
           wide
           caption={
             <>
-              <span className="font-medium text-violet-800">7. Block explorer</span> —{" "}
+              <span className="font-medium text-violet-800">8. Block explorer</span> —{" "}
               <code className="rounded bg-slate-100 px-0.5">GBOE…YNRI</code> invoked{" "}
               <code className="rounded bg-slate-100 px-0.5">set</code> on contract{" "}
               <code className="rounded bg-slate-100 px-0.5">CBGX…6O2R</code> (e.g.{" "}
@@ -259,18 +274,27 @@ export function WalletConnectMobileVerification() {
         subtitle="WalletConnect on testnet — Profile → Testnet, then Settings → WalletConnect to scan the desktop QR."
       />
       <p className="rounded-xl border border-teal-100 bg-teal-50/60 px-3 py-2 text-xs text-teal-950 sm:text-sm">
-        <strong>Order:</strong> LOBSTR <strong>Settings → Profile → Network → Testnet</strong> (and Friendbot-fund your{" "}
+        <strong>Order:</strong> LOBSTR <strong>Settings → Profile → Network → Testnet</strong> (see steps 1–2 below; Friendbot-fund your{" "}
         <code className="rounded bg-slate-100 px-0.5">G…</code> on testnet), then{" "}
         <strong>Settings → WalletConnect</strong> to scan the desktop QR — not the iPhone Camera.
       </p>
       <WcScreenshotDock title="LOBSTR: enable Stellar Testnet" columns={2}>
         <WcScreenshotCard
-          src="/howtolobstrchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.JPG"
-          alt="LOBSTR Profile settings with Network set to Testnet"
-          wide
+          src="/lobstrsettingsstepscreenshotforchangingtotestnetwork.jpg"
+          alt="LOBSTR Settings screen — open Profile to change network"
           caption={
             <>
-              <span className="font-medium text-teal-800">1. Testnet</span> — Profile → Network →{" "}
+              <span className="font-medium text-teal-800">1. Settings</span> — open LOBSTR{" "}
+              <strong>Settings</strong>, then tap <strong>Profile</strong>.
+            </>
+          }
+        />
+        <WcScreenshotCard
+          src="/howtolobstrchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.JPG"
+          alt="LOBSTR Profile settings with Network set to Testnet"
+          caption={
+            <>
+              <span className="font-medium text-teal-800">2. Testnet</span> — Profile → Network →{" "}
               <strong>Testnet</strong> (required before Soroban writes on this POC).
             </>
           }
@@ -282,7 +306,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR wallet scan QR codes screenshot — WalletConnect scanner in LOBSTR app"
           caption={
             <>
-              <span className="font-medium text-teal-800">2. Scan QR</span> — LOBSTR Settings → WalletConnect;
+              <span className="font-medium text-teal-800">3. Scan QR</span> — LOBSTR Settings → WalletConnect;
               scan desktop QR (not iPhone Camera).
             </>
           }
@@ -292,7 +316,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR wallet connection request after scanning QR — Soroban Fullstack POC wants to connect"
           caption={
             <>
-              <span className="font-medium text-teal-800">3. Connection request</span> — after scanning QR;
+              <span className="font-medium text-teal-800">4. Connection request</span> — after scanning QR;
               Soroban Fullstack POC wants to connect (<code className="rounded bg-slate-100 px-0.5">soroban-fullstack-poc.vercel.app</code>).
             </>
           }
@@ -302,7 +326,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR wallet connection successful — Soroban Fullstack POC connection successful"
           caption={
             <>
-              <span className="font-medium text-teal-800">4. Connection successful</span> — “Soroban Fullstack POC
+              <span className="font-medium text-teal-800">5. Connection successful</span> — “Soroban Fullstack POC
               connection successful” — return to browser.
             </>
           }
@@ -314,7 +338,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR signature request — Soroban Fullstack POC wants you to sign the Invoke Host Function transaction"
           caption={
             <>
-              <span className="font-medium text-teal-800">5. Signature request</span> — Soroban Fullstack POC wants
+              <span className="font-medium text-teal-800">6. Signature request</span> — Soroban Fullstack POC wants
               you to sign the <strong>Invoke Host Function</strong> transaction (smart contract).
             </>
           }
@@ -324,7 +348,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR transaction confirmed for Soroban Fullstack POC"
           caption={
             <>
-              <span className="font-medium text-teal-800">6. Transaction confirmed</span> — LOBSTR confirms the
+              <span className="font-medium text-teal-800">7. Transaction confirmed</span> — LOBSTR confirms the
               Soroban write after you tap <strong>Confirm</strong>.
             </>
           }
@@ -337,7 +361,7 @@ export function WalletConnectMobileVerification() {
           wide
           caption={
             <>
-              <span className="font-medium text-teal-800">7. Block explorer</span> —{" "}
+              <span className="font-medium text-teal-800">8. Block explorer</span> —{" "}
               <code className="rounded bg-slate-100 px-0.5">GDYQ…2LXW</code> invoked{" "}
               <code className="rounded bg-slate-100 px-0.5">set_signed</code> on contract{" "}
               <code className="rounded bg-slate-100 px-0.5">CBGX…6O2R</code> (e.g.{" "}
