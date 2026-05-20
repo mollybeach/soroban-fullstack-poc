@@ -267,6 +267,29 @@ export function WalletConnectMobileVerification() {
         the invoke row, copy{" "}
         <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
       </p>
+      <h3 className="mt-6 text-base font-semibold text-slate-900">Verified transaction links (Freighter)</h3>
+      <ul className="list-inside list-disc space-y-2 text-sm text-slate-600 marker:text-violet-600">
+        <li>
+          <code className="rounded bg-slate-100 px-1 text-xs">set(42 u32)</code> —{" "}
+          <a
+            href="https://stellar.expert/explorer/testnet/tx/a9a96caf69334fb937b4ce144d03a0996749d896a4acdd7b95b32eaf8c82f29b"
+            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+          >
+            Stellar Expert tx
+          </a>{" "}
+          (2026-05-20 15:00:38 UTC)
+        </li>
+        <li>
+          <code className="rounded bg-slate-100 px-1 text-xs">set(0 u32)</code> —{" "}
+          <a
+            href="https://stellar.expert/explorer/testnet/tx/2833e7300a51d2ec713b0e411fa6f2854537b8161d0afaab53fe007e109eac2f"
+            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+          >
+            Stellar Expert tx
+          </a>{" "}
+          (2026-05-20 15:00:03 UTC)
+        </li>
+      </ul>
 
       <WalletSectionHeading
         wallet="lobstr"
@@ -383,28 +406,27 @@ export function WalletConnectMobileVerification() {
         </a>{" "}
         before writes.
       </p>
-
-      <h3 className="mt-6 text-base font-semibold text-slate-900">Verified transaction links (Freighter)</h3>
+      <h3 className="mt-6 text-base font-semibold text-slate-900">Verified transaction links (LOBSTR)</h3>
       <ul className="list-inside list-disc space-y-2 text-sm text-slate-600 marker:text-teal-600">
         <li>
-          <code className="rounded bg-slate-100 px-1 text-xs">set(42 u32)</code> —{" "}
+          <code className="rounded bg-slate-100 px-1 text-xs">set_signed(-404 i32)</code> —{" "}
           <a
-            href="https://stellar.expert/explorer/testnet/tx/a9a96caf69334fb937b4ce144d03a0996749d896a4acdd7b95b32eaf8c82f29b"
-            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            href="https://stellar.expert/explorer/testnet/tx/282f4724b72843307a71ad2207030c5720e71843fe50d7497636c643ab1bd372"
+            className="font-semibold text-teal-800 underline decoration-teal-300 underline-offset-2 hover:text-teal-950"
           >
             Stellar Expert tx
           </a>{" "}
-          (2026-05-20 15:00:38 UTC)
+          (2026-05-20 15:58:43 UTC)
         </li>
         <li>
-          <code className="rounded bg-slate-100 px-1 text-xs">set(0 u32)</code> —{" "}
+          <code className="rounded bg-slate-100 px-1 text-xs">set_signed(0 i32)</code> —{" "}
           <a
-            href="https://stellar.expert/explorer/testnet/tx/2833e7300a51d2ec713b0e411fa6f2854537b8161d0afaab53fe007e109eac2f"
-            className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            href="https://stellar.expert/explorer/testnet/tx/4aaa81a56c1ffd028ef6a26cb613991f6dc59632d16555bb23af129339a75d01"
+            className="font-semibold text-teal-800 underline decoration-teal-300 underline-offset-2 hover:text-teal-950"
           >
             Stellar Expert tx
           </a>{" "}
-          (2026-05-20 15:00:03 UTC)
+          (2026-05-20 15:58:23 UTC)
         </li>
       </ul>
       <p className="mt-4 text-sm text-slate-600">
