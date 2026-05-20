@@ -60,6 +60,16 @@ Toast: “Soroban Fullstack POC connection successful. You can now go back to yo
 
 Shows `GDYQKAEP…YN52LXW` → contract `CBGX…6O2R` with `set_signed(0 i32)` and `set_signed(-404 i32)` (filter by contract, click row for tx link).
 
+### Transaction log (verified writes — LOBSTR)
+
+| # | Date (UTC) | Method | Tx hash | Transaction link | Result |
+|---|------------|--------|---------|------------------|--------|
+| 1 | 2026-05-20 15:58:43 | `set_signed(-404 i32)` | `282f4724b72843307a71ad2207030c5720e71843fe50d7497636c643ab1bd372` | [Stellar Expert](https://stellar.expert/explorer/testnet/tx/282f4724b72843307a71ad2207030c5720e71843fe50d7497636c643ab1bd372) · [Horizon](https://horizon-testnet.stellar.org/transactions/282f4724b72843307a71ad2207030c5720e71843fe50d7497636c643ab1bd372) | Success — signed slot updated |
+| 2 | 2026-05-20 15:58:23 | `set_signed(0 i32)` | `4aaa81a56c1ffd028ef6a26cb613991f6dc59632d16555bb23af129339a75d01` | [Stellar Expert](https://stellar.expert/explorer/testnet/tx/4aaa81a56c1ffd028ef6a26cb613991f6dc59632d16555bb23af129339a75d01) · [Horizon](https://horizon-testnet.stellar.org/transactions/4aaa81a56c1ffd028ef6a26cb613991f6dc59632d16555bb23af129339a75d01) | Success — signed slot updated |
+
+**Account (testnet):**  
+https://stellar.expert/explorer/testnet/account/GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW
+
 ---
 
 ## Freighter — WalletConnect connect, sign, and explorer
@@ -109,7 +119,7 @@ The **filter chip** (`CBGX…6O2R`) only narrows the list; it is **not** the tra
 
 ---
 
-## Transaction log (verified writes)
+## Transaction log (verified writes — Freighter)
 
 | # | Date (UTC) | Method | Tx hash | Transaction link | Result |
 |---|------------|--------|---------|------------------|--------|
