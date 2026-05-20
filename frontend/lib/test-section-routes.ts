@@ -13,6 +13,19 @@ export const TEST_SECTION_SLUGS = [
 
 export type TestSectionSlug = (typeof TEST_SECTION_SLUGS)[number];
 
+/** Display order for in-page jump nav (hero card, sidebars). */
+export const TEST_SECTION_NAV_ORDER: TestSectionSlug[] = [
+  "mobilewallet",
+  "unit",
+  "integration",
+  "property",
+  "proptest",
+  "invariant",
+  "libfuzzer",
+  "coverage",
+  "frontend-wallet",
+];
+
 export type TestSectionRoute = {
   title: string;
   description: string;
