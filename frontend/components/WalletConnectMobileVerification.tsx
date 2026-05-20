@@ -109,19 +109,60 @@ export function WalletConnectMobileVerification() {
       <WcScreenshotDock title="WalletConnect → LOBSTR: connect" columns={2}>
         <WcScreenshotCard
           src="/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG"
-          alt="LOBSTR WalletConnect connection request for soroban-fullstack-poc.vercel.app"
+          alt="LOBSTR connection request — Soroban Fullstack POC wants to connect to your Stellar wallet"
           caption={
             <>
-              <span className="font-medium text-teal-800">2. Request</span> — approve Soroban Fullstack POC.
+              <span className="font-medium text-teal-800">2. Connection request</span> — Soroban Fullstack POC
+              wants to connect to your Stellar wallet (<code className="rounded bg-slate-100 px-0.5">soroban-fullstack-poc.vercel.app</code>).
             </>
           }
         />
         <WcScreenshotCard
           src="/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG"
-          alt="LOBSTR WalletConnect connection successful"
+          alt="LOBSTR Soroban Fullstack POC connection successful"
           caption={
             <>
-              <span className="font-medium text-teal-800">3. Connected</span> — return to browser.
+              <span className="font-medium text-teal-800">3. Connection successful</span> — “Soroban Fullstack POC
+              connection successful” — return to browser.
+            </>
+          }
+        />
+      </WcScreenshotDock>
+      <WcScreenshotDock title="LOBSTR: sign Soroban write (testnet)" columns={2}>
+        <WcScreenshotCard
+          src="/LobstrwalletmobiletransactionscreenshotSoroban FullstackPOCwantsyoutosigntheInvokeHostFunction transaction.SorobanFullstackPOCwants you to sign the Invoke Host Function transaction..PNG"
+          alt="LOBSTR signature request — Soroban Fullstack POC wants you to sign the Invoke Host Function transaction"
+          caption={
+            <>
+              <span className="font-medium text-teal-800">4. Signature request</span> — Soroban Fullstack POC wants
+              you to sign the <strong>Invoke Host Function</strong> transaction (smart contract).
+            </>
+          }
+        />
+        <WcScreenshotCard
+          src="/lobstrtransactionsuccessfulconfirmedsorobanfullstackpocmobileqrcodescreenshotmobile.PNG"
+          alt="LOBSTR transaction confirmed for Soroban Fullstack POC"
+          caption={
+            <>
+              <span className="font-medium text-teal-800">5. Transaction confirmed</span> — LOBSTR confirms the
+              Soroban write after you tap <strong>Confirm</strong>.
+            </>
+          }
+        />
+      </WcScreenshotDock>
+      <WcScreenshotDock title="LOBSTR writes on Stellar Expert (desktop)" columns={2}>
+        <WcScreenshotCard
+          src="/lobstrblockexploererondesktopyoucanseethatthelobstrmobilewallettransactionyaddressucessfullyinvolkedsignsetfunctionontheblockexploreryoucanseethistranasctioncontractinteraction.png"
+          alt="Stellar Expert testnet showing LOBSTR wallet GDYQ invoked set_signed on contract CBGX"
+          wide
+          caption={
+            <>
+              <span className="font-medium text-teal-800">6. Block explorer</span> —{" "}
+              <code className="rounded bg-slate-100 px-0.5">GDYQ…2LXW</code> invoked{" "}
+              <code className="rounded bg-slate-100 px-0.5">set_signed</code> on contract{" "}
+              <code className="rounded bg-slate-100 px-0.5">CBGX…6O2R</code> (e.g.{" "}
+              <code className="rounded bg-slate-100 px-0.5">set_signed(0 i32)</code>,{" "}
+              <code className="rounded bg-slate-100 px-0.5">set_signed(-404 i32)</code>). Click a row for the tx URL.
             </>
           }
         />
@@ -129,17 +170,15 @@ export function WalletConnectMobileVerification() {
       <p className="mt-3 text-sm text-slate-600">
         LOBSTR account{" "}
         <code className="rounded bg-slate-100 px-1 text-xs">GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW</code>
-        : connect can succeed while writes fail with{" "}
-        <code className="rounded bg-slate-100 px-1">Account not found</code> until the same{" "}
-        <code className="rounded bg-slate-100 px-1">G…</code> exists on{" "}
-        <strong>testnet</strong> —{" "}
+        : enable <strong>testnet</strong> and fund via{" "}
         <a
           href="https://friendbot.stellar.org/?addr=GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW"
           className="font-semibold text-teal-800 underline decoration-teal-300 underline-offset-2 hover:text-teal-950"
         >
           Friendbot
         </a>{" "}
-        (mainnet XLM does not count).
+        before writes. On Stellar Expert, filter by contract and click an invoke row to copy{" "}
+        <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
       </p>
 
       <h3 className="mt-8 text-base font-semibold text-slate-900">WalletConnect → Freighter mobile</h3>

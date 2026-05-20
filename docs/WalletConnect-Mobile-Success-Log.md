@@ -36,17 +36,29 @@ Use **Settings → Profile → Network → Testnet** in LOBSTR before WalletConn
 
 Web: `/howtolobstrchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.JPG`
 
-#### 2. Connection request
+#### 2. Connection request (`Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc`)
 
-![LOBSTR WalletConnect connection request](../frontend/public/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG)
+![LOBSTR connection request — Soroban Fullstack POC](../frontend/public/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG)
 
-Web: `/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG`
+#### 3. Connection successful (`Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful`)
 
-#### 3. Connection successful
+![LOBSTR Soroban Fullstack POC connection successful](../frontend/public/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG)
 
-![LOBSTR WalletConnect connection successful](../frontend/public/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG)
+Toast: “Soroban Fullstack POC connection successful. You can now go back to your browser.”
 
-Web: `/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG`
+#### 4. Signature request — Invoke Host Function
+
+![LOBSTR sign Invoke Host Function](../frontend/public/LobstrwalletmobiletransactionscreenshotSoroban FullstackPOCwantsyoutosigntheInvokeHostFunction transaction.SorobanFullstackPOCwants you to sign the Invoke Host Function transaction..PNG)
+
+#### 5. Transaction confirmed (`lobstrtransactionsuccessfulconfirmedsorobanfullstackpocmobileqrcodescreenshotmobile`)
+
+![LOBSTR transaction confirmed](../frontend/public/lobstrtransactionsuccessfulconfirmedsorobanfullstackpocmobileqrcodescreenshotmobile.PNG)
+
+#### 6. Stellar Expert — `set_signed` on contract (`lobstrblockexploerer…contractinteraction`)
+
+![LOBSTR wallet invokes set_signed on Stellar Expert](../frontend/public/lobstrblockexploererondesktopyoucanseethatthelobstrmobilewallettransactionyaddressucessfullyinvolkedsignsetfunctionontheblockexploreryoucanseethistranasctioncontractinteraction.png)
+
+Shows `GDYQKAEP…YN52LXW` → contract `CBGX…6O2R` with `set_signed(0 i32)` and `set_signed(-404 i32)` (filter by contract, click row for tx link).
 
 ---
 
@@ -172,6 +184,9 @@ Web: `/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressuce
 | Freighter Network → Test Net (Settings) | — | ✅ |
 | WalletConnect pairing from in-app scanner | ✅ | ✅ |
 | dApp shows connected on phone | ✅ | ✅ |
+| LOBSTR sign Invoke Host Function (mobile) | ✅ | — |
+| LOBSTR transaction confirmed (mobile) | ✅ | — |
+| Explorer shows LOBSTR `set_signed` on contract | ✅ | — |
 | Mobile confirm `set()` on testnet | — | ✅ |
 | Mobile “Transaction successfully signed!” | — | ✅ |
 | Explorer shows writes on contract | — | ✅ (`set(0)`, `set(42)`) |
