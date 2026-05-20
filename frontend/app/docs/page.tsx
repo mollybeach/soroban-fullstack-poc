@@ -482,12 +482,85 @@ export default function DocsPage() {
           </figcaption>
         </figure>
 
-        <h3 className="mt-8 text-base font-semibold text-violet-900">3. Transaction log (document writes here)</h3>
+        <h3 className="mt-8 text-base font-semibold text-violet-900">
+          3. Confirm <code className="rounded bg-violet-100 px-1 text-sm">set()</code> on mobile (testnet)
+        </h3>
+        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
+          <Image
+            src="/mobilescreenshotyoucanseetransactionset()withmobilewallet.PNG"
+            alt="Freighter mobile confirm transaction for soroban-fullstack-poc.vercel.app on Test Net"
+            width={1200}
+            height={900}
+            className="h-auto w-full"
+          />
+          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
+            Approve the Soroban write in Freighter (Test Net). &quot;Unable to simulate&quot; can appear; you can still continue if you trust the dApp.
+          </figcaption>
+        </figure>
+
+        <h3 className="mt-8 text-base font-semibold text-violet-900">4. Signed successfully on phone</h3>
+        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
+          <Image
+            src="/transactionsuccessfullysignmobiledwallet.PNG"
+            alt="Freighter mobile toast Transaction successfully signed"
+            width={1200}
+            height={900}
+            className="h-auto w-full"
+          />
+          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
+            Return to the browser; the home page transaction log and reads should update after refresh.
+          </figcaption>
+        </figure>
+
+        <h3 className="mt-8 text-base font-semibold text-violet-900">5. Block explorer (desktop)</h3>
         <p>
-          After you run writes on <Link href="/">Home</Link>, add each transaction hash to{" "}
-          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>{" "}
-          (table section). That file is the canonical audit trail for this wallet + WalletConnect
-          path.
+          On <strong>Stellar Expert (testnet)</strong>, filter by your contract (<code className="rounded bg-slate-100 px-1">CBGX…6O2R</code> or full{" "}
+          <code className="rounded bg-slate-100 px-1">C…</code> id). To get a <strong>transaction link</strong>, click the{" "}
+          <strong>row</strong> (e.g. <code className="rounded bg-slate-100 px-1 text-xs">GBOE…YNRI invoked contract … set(42 u32)</code>
+          ), then copy the URL:{" "}
+          <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
+        </p>
+        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
+          <Image
+            src="/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png"
+            alt="Stellar Expert testnet showing mobile wallet address invoked set on the POC contract"
+            width={1200}
+            height={900}
+            className="h-auto w-full"
+          />
+          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
+            Verified writes: <code className="rounded bg-slate-100 px-1">set(0 u32)</code> and{" "}
+            <code className="rounded bg-slate-100 px-1">set(42 u32)</code> from{" "}
+            <code className="rounded bg-slate-100 px-1 text-[10px] sm:text-xs">GBOE2WOJ…YNRI</code>.
+          </figcaption>
+        </figure>
+
+        <h3 className="mt-8 text-base font-semibold text-violet-900">6. Verified transaction links</h3>
+        <ul className="list-inside list-disc space-y-2 marker:text-violet-500">
+          <li>
+            <code className="rounded bg-slate-100 px-1 text-xs">set(42 u32)</code> —{" "}
+            <a
+              href="https://stellar.expert/explorer/testnet/tx/a9a96caf69334fb937b4ce144d03a0996749d896a4acdd7b95b32eaf8c82f29b"
+              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            >
+              Stellar Expert tx
+            </a>{" "}
+            (2026-05-20 15:00:38 UTC)
+          </li>
+          <li>
+            <code className="rounded bg-slate-100 px-1 text-xs">set(0 u32)</code> —{" "}
+            <a
+              href="https://stellar.expert/explorer/testnet/tx/2833e7300a51d2ec713b0e411fa6f2854537b8161d0afaab53fe007e109eac2f"
+              className="font-semibold text-violet-700 underline decoration-violet-300 underline-offset-2 hover:text-violet-900"
+            >
+              Stellar Expert tx
+            </a>{" "}
+            (2026-05-20 15:00:03 UTC)
+          </li>
+        </ul>
+        <p className="text-sm text-slate-600">
+          Full table and screenshots:{" "}
+          <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>
         </p>
       </Section>
 
