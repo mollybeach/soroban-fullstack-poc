@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { testsSectionPath } from "@/lib/test-section-routes";
 
 function WcScreenshotCard({
   src,
@@ -67,10 +68,10 @@ export function WalletConnectMobileVerification() {
       <p className="text-xs font-semibold uppercase tracking-widest text-teal-700">
         Manual QA ·{" "}
         <Link
-          href="/tests/mobilewallet"
+          href={testsSectionPath("mobilewallet")}
           className="font-mono normal-case text-teal-800 underline decoration-teal-300 underline-offset-2 hover:text-teal-950"
         >
-          /tests/mobilewallet
+          {testsSectionPath("mobilewallet")}
         </Link>
       </p>
       <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
@@ -88,16 +89,30 @@ export function WalletConnectMobileVerification() {
 
       <h3 className="mt-6 text-base font-semibold text-slate-900">WalletConnect → LOBSTR mobile</h3>
       <p className="rounded-xl border border-teal-100 bg-teal-50/60 px-3 py-2 text-xs text-teal-950 sm:text-sm">
-        <strong>Path:</strong> WalletConnect QR (browser) → <strong>LOBSTR</strong> — connection request, then success
-        toast. LOBSTR: <strong>Settings → WalletConnect</strong>; enable <strong>Testnet</strong> before writes.
+        <strong>Order:</strong> LOBSTR <strong>Settings → Profile → Network → Testnet</strong> (and Friendbot-fund your{" "}
+        <code className="rounded bg-slate-100 px-0.5">G…</code> on testnet), then{" "}
+        <strong>Settings → WalletConnect</strong> to scan the desktop QR — not the iPhone Camera.
       </p>
+      <WcScreenshotDock title="LOBSTR: enable Stellar Testnet" columns={2}>
+        <WcScreenshotCard
+          src="/howtolobstrchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.JPG"
+          alt="LOBSTR Profile settings with Network set to Testnet"
+          wide
+          caption={
+            <>
+              <span className="font-medium text-teal-800">1. Testnet</span> — Profile → Network →{" "}
+              <strong>Testnet</strong> (required before Soroban writes on this POC).
+            </>
+          }
+        />
+      </WcScreenshotDock>
       <WcScreenshotDock title="WalletConnect → LOBSTR: connect" columns={2}>
         <WcScreenshotCard
           src="/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG"
           alt="LOBSTR WalletConnect connection request for soroban-fullstack-poc.vercel.app"
           caption={
             <>
-              <span className="font-medium text-teal-800">1. Request</span> — approve Soroban Fullstack POC.
+              <span className="font-medium text-teal-800">2. Request</span> — approve Soroban Fullstack POC.
             </>
           }
         />
@@ -106,7 +121,7 @@ export function WalletConnectMobileVerification() {
           alt="LOBSTR WalletConnect connection successful"
           caption={
             <>
-              <span className="font-medium text-teal-800">2. Connected</span> — return to browser.
+              <span className="font-medium text-teal-800">3. Connected</span> — return to browser.
             </>
           }
         />
@@ -128,11 +143,10 @@ export function WalletConnectMobileVerification() {
       </p>
 
       <h3 className="mt-8 text-base font-semibold text-slate-900">WalletConnect → Freighter mobile</h3>
-      <p className="text-sm text-slate-600">
-        <strong>Connected testnet account (writes + explorer):</strong>{" "}
-        <code className="break-all rounded bg-slate-100 px-1 text-xs">
-          GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI
-        </code>
+      <p className="rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900 sm:text-sm">
+        <strong>Order:</strong> Freighter <strong>Settings → Network → Test Net</strong>, then WalletConnect scan in
+        Freighter (not the iPhone Camera). Writes use testnet account{" "}
+        <code className="rounded bg-slate-100 px-0.5 text-[10px] sm:text-xs">GBOE2WOJ…YNRI</code>.
       </p>
       <p>
         <a
@@ -144,9 +158,19 @@ export function WalletConnectMobileVerification() {
           View account on Stellar Expert (testnet)
         </a>
       </p>
-      <p className="rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2 text-xs text-violet-900 sm:text-sm">
-        <strong>Path:</strong> WalletConnect (browser) → <strong>Freighter</strong> — scan QR in Freighter, not Camera.
-      </p>
+      <WcScreenshotDock title="Freighter: enable Test Net" columns={2}>
+        <WcScreenshotCard
+          src="/howtofreighterwalletchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.jpg"
+          alt="Freighter Network screen with Test Net selected"
+          wide
+          caption={
+            <>
+              <span className="font-medium text-violet-800">1. Test Net</span> — Settings → Network → select{" "}
+              <strong>Test Net</strong>.
+            </>
+          }
+        />
+      </WcScreenshotDock>
 
       <WcScreenshotDock title="WalletConnect → Freighter: pair & sign" columns={3}>
         <WcScreenshotCard
@@ -154,7 +178,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter scanning desktop WalletConnect QR"
           caption={
             <>
-              <span className="font-medium text-violet-800">1. Scan</span>
+              <span className="font-medium text-violet-800">2. Scan</span> — in Freighter, not Camera.
             </>
           }
         />
@@ -163,7 +187,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter connection successful"
           caption={
             <>
-              <span className="font-medium text-violet-800">2. Connected</span>
+              <span className="font-medium text-violet-800">3. Connected</span>
             </>
           }
         />
@@ -172,7 +196,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter confirm set()"
           caption={
             <>
-              <span className="font-medium text-violet-800">3. Confirm</span>{" "}
+              <span className="font-medium text-violet-800">4. Confirm</span>{" "}
               <code className="rounded bg-slate-100 px-0.5">set()</code>
             </>
           }
@@ -182,7 +206,7 @@ export function WalletConnectMobileVerification() {
           alt="Freighter transaction signed"
           caption={
             <>
-              <span className="font-medium text-violet-800">4. Signed</span>
+              <span className="font-medium text-violet-800">5. Signed</span>
             </>
           }
         />

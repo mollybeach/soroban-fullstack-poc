@@ -436,7 +436,9 @@ export default function DocsPage() {
           >
             Contract tests → mobile wallet
           </Link>{" "}
-          (<code className="rounded bg-slate-100 px-1">/tests/mobilewallet</code>), next to
+          (<code className="rounded bg-slate-100 px-1">/tests/mobilewallet</code>, or any card link under{" "}
+          <code className="rounded bg-slate-100 px-1">/tests/unit</code>,{" "}
+          <code className="rounded bg-slate-100 px-1">/tests/integration</code>, …), next to
           Vitest wallet rows. Repo copy:{" "}
           <code className="rounded bg-slate-100 px-1">docs/WalletConnect-Mobile-Success-Log.md</code>.
         </p>

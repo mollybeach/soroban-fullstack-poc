@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   Beaker,
   Bug,
@@ -20,9 +21,12 @@ import { WalletConnectMobileVerification } from "@/components/WalletConnectMobil
 import { formatUnknownError } from "@/lib/format-unknown-error";
 import { stellarExpertContractUrl } from "@/lib/stellar";
 import {
-  scheduleScrollToMobileWalletVerification,
-  scrollToMobileWalletVerification,
-} from "@/lib/tests-scroll";
+  categoryIdToSlug,
+  isTestSectionSlug,
+  scheduleScrollToTestSection,
+  testsSectionPath,
+  type TestSectionSlug,
+} from "@/lib/test-section-routes";
 
 type TestCaseRow = {
   id: string;
@@ -230,33 +234,11 @@ const KIND_BADGE: Record<string, string> = {
   frontend_wallet: "bg-teal-100 text-teal-950 ring-teal-200",
 };
 
-/** Scroll to the on-page anchor for a test category card (`test-kind-*`). */
-function scrollToTestKind(kindId: string) {
-  const el = document.getElementById(`test-kind-${kindId}`);
-  if (el) {
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  if (kindId === "integration") {
-    document.getElementById("test-kind-integration")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  if (kindId === "frontend_wallet") {
-    if (document.getElementById("walletconnect-mobile-verified")) {
-      scrollToMobileWalletVerification();
-    } else {
-      document.getElementById("test-kind-frontend_wallet")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-    return;
-  }
-  document.getElementById("test-kind-lib")?.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 export default function TestsPage({
-  scrollToMobileWalletOnMount = false,
+  initialScrollSection,
 }: {
-  /** Set by `/tests/mobilewallet` so the URL opens on the WalletConnect screenshot section. */
-  scrollToMobileWalletOnMount?: boolean;
+  /** Set by `/tests/[section]` routes to scroll on load (e.g. `/tests/unit`, `/tests/mobilewallet`). */
+  initialScrollSection?: TestSectionSlug;
 }) {
   const [data, setData] = useState<TestResultsPayload | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -322,14 +304,24 @@ export default function TestsPage({
   }, []);
 
   useEffect(() => {
-    if (scrollToMobileWalletOnMount) {
-      return scheduleScrollToMobileWalletVerification();
+    if (initialScrollSection) {
+      return scheduleScrollToTestSection(initialScrollSection);
     }
-    if (window.location.hash === "#walletconnect-mobile-verified") {
-      return scheduleScrollToMobileWalletVerification();
+    const hash = window.location.hash.replace(/^#/, "");
+    if (hash === "walletconnect-mobile-verified") {
+      return scheduleScrollToTestSection("mobilewallet");
+    }
+    if (hash && isTestSectionSlug(hash)) {
+      return scheduleScrollToTestSection(hash);
+    }
+    if (hash.startsWith("test-kind-")) {
+      const el = document.getElementById(hash);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
     return undefined;
-  }, [scrollToMobileWalletOnMount]);
+  }, [initialScrollSection]);
 
   const d = useMemo(() => normalizePayload(data ?? FALLBACK), [data]);
   const generated = new Date(d.generatedAt);
@@ -558,6 +550,8 @@ export default function TestsPage({
           The contract is validated several different ways. Counts on badges reflect how many{" "}
           <code className="rounded bg-slate-100 px-1 font-mono text-xs">cargo test</code> cases fall in each bucket
           (libFuzzer runs outside <code className="rounded bg-slate-100 px-1 font-mono text-xs">cargo test</code>).
+          Each card links to a shareable URL under <code className="rounded bg-slate-100 px-1 font-mono text-xs">/tests/…</code>{" "}
+          that scrolls to that section.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {d.categories.map((c) => {
@@ -570,11 +564,12 @@ export default function TestsPage({
             } else if (n != null && n > 0) {
               countLabel = `${n} case${n === 1 ? "" : "s"}`;
             }
+            const slug = categoryIdToSlug(c.id);
+            const sectionHref = slug ? testsSectionPath(slug) : "/tests";
             return (
-              <button
+              <Link
                 key={c.id}
-                type="button"
-                onClick={() => scrollToTestKind(c.id)}
+                href={sectionHref}
                 className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-300 hover:bg-violet-50/30 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -587,8 +582,10 @@ export default function TestsPage({
                 </div>
                 <code className="mt-2 block text-xs text-violet-700">{c.tool}</code>
                 <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">{c.description}</p>
-                <span className="mt-3 text-xs font-medium text-violet-600">Jump to section ↓</span>
-              </button>
+                <span className="mt-3 font-mono text-[10px] font-medium text-violet-600 sm:text-xs">
+                  {sectionHref}
+                </span>
+              </Link>
             );
           })}
         </div>
