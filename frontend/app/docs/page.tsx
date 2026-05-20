@@ -30,6 +30,62 @@ function Section({
   );
 }
 
+/** Compact thumbnail for WalletConnect screenshot dock grids on this page. */
+function WcScreenshotCard({
+  src,
+  alt,
+  caption,
+  wide,
+}: {
+  src: string;
+  alt: string;
+  caption: ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <figure
+      className={`flex flex-col overflow-hidden rounded-xl border border-violet-100 bg-slate-50 shadow-sm ${
+        wide ? "sm:col-span-2" : ""
+      }`}
+    >
+      <div className="flex min-h-[9rem] items-center justify-center bg-gradient-to-b from-slate-100 to-slate-50 p-2 sm:min-h-[10rem]">
+        <Image
+          src={src}
+          alt={alt}
+          width={360}
+          height={480}
+          className="max-h-36 w-auto max-w-full object-contain sm:max-h-40"
+          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 220px"
+        />
+      </div>
+      <figcaption className="border-t border-violet-50 px-2 py-1.5 text-[10px] leading-snug text-slate-600 sm:text-xs">
+        {caption}
+      </figcaption>
+    </figure>
+  );
+}
+
+function WcScreenshotDock({
+  title,
+  children,
+  columns = 3,
+}: {
+  title: string;
+  children: ReactNode;
+  columns?: 2 | 3;
+}) {
+  const gridClass =
+    columns === 2
+      ? "grid grid-cols-2 gap-2 sm:gap-3"
+      : "grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 sm:gap-3";
+  return (
+    <div className="mt-5">
+      <h3 className="text-sm font-semibold text-violet-900">{title}</h3>
+      <div className={`${gridClass} mt-2`}>{children}</div>
+    </div>
+  );
+}
+
 export default function DocsPage() {
   return (
     <div className="space-y-10 pb-12">
@@ -452,90 +508,67 @@ export default function DocsPage() {
           </a>
         </p>
 
-        <h3 className="mt-6 text-base font-semibold text-violet-900">1. Scan QR inside Freighter</h3>
-        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
-          <Image
+        <WcScreenshotDock title="Mobile flow (pair → sign)" columns={3}>
+          <WcScreenshotCard
             src="/scanningwalletconnectonphone.jpg"
-            alt="Freighter mobile WalletConnect scanner pointed at the desktop Soroban Fullstack POC QR code"
-            width={1200}
-            height={900}
-            className="h-auto w-full"
-            priority={false}
+            alt="Freighter mobile scanning desktop WalletConnect QR"
+            caption={
+              <>
+                <span className="font-medium text-violet-800">1. Scan</span> — in Freighter, not Camera.
+              </>
+            }
           />
-          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
-            Scan the desktop QR from Freighter → WalletConnect (avoid MetaMask / phone Camera).
-          </figcaption>
-        </figure>
-
-        <h3 className="mt-8 text-base font-semibold text-violet-900">2. Connection success on phone</h3>
-        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
-          <Image
+          <WcScreenshotCard
             src="/successfulSorobanfullstackpocconnectiononphone.jpg"
-            alt="Freighter mobile showing Soroban Fullstack POC WalletConnect connection successful"
-            width={1200}
-            height={900}
-            className="h-auto w-full"
-            priority={false}
+            alt="Soroban Fullstack POC connection successful on Freighter mobile"
+            caption={
+              <>
+                <span className="font-medium text-violet-800">2. Connected</span>
+              </>
+            }
           />
-          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
-            Phone confirms pairing; return to the browser to submit Soroban writes.
-          </figcaption>
-        </figure>
-
-        <h3 className="mt-8 text-base font-semibold text-violet-900">
-          3. Confirm <code className="rounded bg-violet-100 px-1 text-sm">set()</code> on mobile (testnet)
-        </h3>
-        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
-          <Image
+          <WcScreenshotCard
             src="/mobilescreenshotyoucanseetransactionset()withmobilewallet.PNG"
-            alt="Freighter mobile confirm transaction for soroban-fullstack-poc.vercel.app on Test Net"
-            width={1200}
-            height={900}
-            className="h-auto w-full"
+            alt="Freighter confirm set() for soroban-fullstack-poc.vercel.app"
+            caption={
+              <>
+                <span className="font-medium text-violet-800">3. Confirm</span>{" "}
+                <code className="rounded bg-slate-100 px-0.5">set()</code>
+              </>
+            }
           />
-          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
-            Approve the Soroban write in Freighter (Test Net). &quot;Unable to simulate&quot; can appear; you can still continue if you trust the dApp.
-          </figcaption>
-        </figure>
-
-        <h3 className="mt-8 text-base font-semibold text-violet-900">4. Signed successfully on phone</h3>
-        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
-          <Image
+          <WcScreenshotCard
             src="/transactionsuccessfullysignmobiledwallet.PNG"
-            alt="Freighter mobile toast Transaction successfully signed"
-            width={1200}
-            height={900}
-            className="h-auto w-full"
+            alt="Transaction successfully signed on Freighter mobile"
+            caption={
+              <>
+                <span className="font-medium text-violet-800">4. Signed</span>
+              </>
+            }
           />
-          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
-            Return to the browser; the home page transaction log and reads should update after refresh.
-          </figcaption>
-        </figure>
+        </WcScreenshotDock>
 
-        <h3 className="mt-8 text-base font-semibold text-violet-900">5. Block explorer (desktop)</h3>
-        <p>
-          On <strong>Stellar Expert (testnet)</strong>, filter by your contract (<code className="rounded bg-slate-100 px-1">CBGX…6O2R</code> or full{" "}
-          <code className="rounded bg-slate-100 px-1">C…</code> id). To get a <strong>transaction link</strong>, click the{" "}
-          <strong>row</strong> (e.g. <code className="rounded bg-slate-100 px-1 text-xs">GBOE…YNRI invoked contract … set(42 u32)</code>
-          ), then copy the URL:{" "}
+        <WcScreenshotDock title="Block explorer (desktop)" columns={2}>
+          <WcScreenshotCard
+            src="/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png"
+            alt="Stellar Expert showing GBOE address invoked set on contract"
+            wide
+            caption={
+              <>
+                <span className="font-medium text-violet-800">Stellar Expert</span> —{" "}
+                <code className="rounded bg-slate-100 px-0.5">set(0)</code> and{" "}
+                <code className="rounded bg-slate-100 px-0.5">set(42)</code> from mobile wallet. Click a row for the tx URL.
+              </>
+            }
+          />
+        </WcScreenshotDock>
+
+        <p className="mt-4 text-sm text-slate-600">
+          On <strong>Stellar Expert (testnet)</strong>, filter by contract (<code className="rounded bg-slate-100 px-1">CBGX…6O2R</code>), click the invoke row, and copy{" "}
           <code className="rounded bg-slate-100 px-1 text-xs">https://stellar.expert/explorer/testnet/tx/&lt;hash&gt;</code>.
         </p>
-        <figure className="overflow-hidden rounded-2xl border border-violet-100 bg-slate-50 shadow-md">
-          <Image
-            src="/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png"
-            alt="Stellar Expert testnet showing mobile wallet address invoked set on the POC contract"
-            width={1200}
-            height={900}
-            className="h-auto w-full"
-          />
-          <figcaption className="border-t border-violet-50 px-4 py-2 text-xs text-slate-600">
-            Verified writes: <code className="rounded bg-slate-100 px-1">set(0 u32)</code> and{" "}
-            <code className="rounded bg-slate-100 px-1">set(42 u32)</code> from{" "}
-            <code className="rounded bg-slate-100 px-1 text-[10px] sm:text-xs">GBOE2WOJ…YNRI</code>.
-          </figcaption>
-        </figure>
 
-        <h3 className="mt-8 text-base font-semibold text-violet-900">6. Verified transaction links</h3>
+        <h3 className="mt-6 text-base font-semibold text-violet-900">6. Verified transaction links</h3>
         <ul className="list-inside list-disc space-y-2 marker:text-violet-500">
           <li>
             <code className="rounded bg-slate-100 px-1 text-xs">set(42 u32)</code> —{" "}
