@@ -1,3 +1,5 @@
+import { WalletConnectTargetChain } from "@creit-tech/stellar-wallets-kit/modules/wallet-connect";
+
 /**
  * Stellar Wallets Kit module catalog for this POC (aligned with `@creit-tech/stellar-wallets-kit`
  * `defaultModules()` in v2.2.0 + optional `WalletConnectModule`).
@@ -32,7 +34,7 @@ export type PocWalletModule = (typeof SWK_DEFAULT_WALLET_MODULES)[number] | type
 
 /** Product ids shown in the kit auth modal for this app configuration. */
 export function resolvePocWalletPickerIds(projectId: string | null | undefined): string[] {
-  const ids = SWK_DEFAULT_WALLET_MODULES.map((m) => m.id);
+  const ids: string[] = SWK_DEFAULT_WALLET_MODULES.map((m) => m.id);
   if (projectId?.trim()) {
     ids.push(WALLET_CONNECT_PRODUCT_ID);
   }
@@ -54,7 +56,7 @@ export type WalletConnectModuleOptions = {
     url: string;
     icons: string[];
   };
-  allowedChains: readonly [typeof POC_WALLET_CONNECT_CHAIN];
+  allowedChains: WalletConnectTargetChain[];
   signClientOptions: { logger: "silent" };
 };
 
@@ -76,7 +78,7 @@ export function buildWalletConnectModuleOptions(
       url: baseOrigin,
       icons: [`${baseOrigin}/favicon.ico`],
     },
-    allowedChains: [POC_WALLET_CONNECT_CHAIN],
+    allowedChains: [WalletConnectTargetChain.TESTNET],
     signClientOptions: { logger: "silent" },
   };
 }
