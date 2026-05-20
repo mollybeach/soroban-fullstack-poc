@@ -144,9 +144,9 @@ Web: `/howtofreighterwalletchangenetworktostellartestnetgotosettingsprofilenetwo
 
 #### 2. Scan QR (Freighter mobile)
 
-![Scan WalletConnect QR](../frontend/public/scanningwalletconnectonphone.jpg)
+![Scan WalletConnect QR](../frontend/public/freighterscanQRcode.jpg)
 
-Web: `/scanningwalletconnectonphone.jpg`
+Web: `/freighterscanQRcode.jpg`
 
 #### 3. Connection success
 
