@@ -13,9 +13,19 @@ This repository is intended to validate the foundational development lifecycle f
 - Event emission for indexing pipelines
 - Foundation for observability and security tooling
 
-The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow.
+The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow. It is suitable as a **reference implementation** for teams building tokenization or factory-style platforms on Stellar: contract patterns, test depth, deploy scripts, wallet integration, and indexer-friendly events are all exercised in one place.
 
-**Extra docs:** [POC deliverables checklist ↔ repo](docs/POC_DELIVERABLES.md) · [Stellar / Soroban libraries](docs/STELLAR_LIBRARIES.md) · [POC workstream ↔ repo map](docs/POC_WORKSTREAM_TRACKING.md).
+### Documentation map
+
+| Document | Audience | Contents |
+|----------|----------|----------|
+| [POC workstream ↔ repo](docs/POC_WORKSTREAM_TRACKING.md) | PM / tech lead | What is **Done / Partial / Planned** per workstream, verify commands, demo order |
+| [WalletConnect mobile success log](docs/WalletConnect-Mobile-Success-Log.md) | QA / Stellar review | Verified LOBSTR + Freighter WC flows, tx hashes, screenshots, troubleshooting |
+| [Contract tests dashboard](frontend/docs/ContractTestsDashboard.md) | Engineering | `/tests` JSON pipeline, 16-test evidence, coverage |
+| [Stellar / Soroban libraries](docs/STELLAR_LIBRARIES.md) | Architecture | Library survey and future tooling |
+| In-app `/docs` | Operators | How the POC app, wallets, and env vars work |
+
+**Live deployment (example):** [soroban-fullstack-poc.vercel.app](https://soroban-fullstack-poc.vercel.app) — requires `NEXT_PUBLIC_CONTRACT_ID` and WalletConnect project id on the host.
 
 ---
 
@@ -59,56 +69,74 @@ This POC validates:
 - property-style tests
 - fuzz/invariant testing foundation
 
-## Future Extensions
+## Wallets (current vs future)
 
-- Firehose/Substreams indexing
-- OpenZeppelin monitoring
-- Certora analysis
-- Runtime verification
-- Wallet integrations
-- CI/CD pipelines
+- **Implemented:** `@creit-tech/stellar-wallets-kit` — browser extensions **and** **WalletConnect** (Reown) for mobile **Freighter** and **LOBSTR** on testnet. See [docs/WalletConnect-Mobile-Success-Log.md](docs/WalletConnect-Mobile-Success-Log.md).
+- **Future:** custody integrations, additional institutional signers, wallet abstraction behind your tokenization API.
+
+## Future extensions
+
+- Firehose / Substreams indexing sink and FE historical API
+- OpenZeppelin-style monitoring
+- Formal verification / Certora-style analysis (research)
+- Production CI on every PR (Makefile targets exist; wire in your pipeline)
+- Richer multi-contract “factory” logic (may live in a separate Solidity/Rust repo in your org)
 
 ---
 
-# Repository Structure
+# Repository structure
 
 ```txt
 soroban-fullstack-poc/
 │
 ├── docs/
-│   ├── STELLAR_LIBRARIES.md
-│   └── POC_WORKSTREAM_TRACKING.md
+│   ├── POC_WORKSTREAM_TRACKING.md    # Plan ↔ repo status (deep map)
+│   ├── WalletConnect-Mobile-Success-Log.md
+│   └── STELLAR_LIBRARIES.md
 │
-├── contracts/
-│   └── basic-storage/
-│       ├── Cargo.toml
-│       ├── fuzz/
-│       ├── tests/
-│       │   └── integration_contract.rs
-│       └── src/
-│           ├── lib.rs
-│           └── test.rs
+├── contracts/basic-storage/
+│   ├── src/lib.rs                    # Contract + events
+│   ├── src/test.rs                   # Unit, proptest, invariants
+│   ├── tests/integration_contract.rs
+│   └── fuzz/                         # libFuzzer harness
 │
 ├── frontend/
-│   ├── package.json
 │   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── demo/page.tsx
-│   │   └── globals.css
-│   ├── components/
-│   │   └── SiteHeader.tsx
-│   ├── public/demo/
-│   └── lib/
-│       └── stellar.ts
+│   │   ├── page.tsx                  # Home: reads, writes, wallet, logs
+│   │   ├── tests/                    # Test results dashboard
+│   │   ├── bindings/                 # Interface explorer
+│   │   ├── docs/                     # In-app documentation
+│   │   └── demo/                     # Optional screen recording
+│   ├── lib/stellar.ts                # Soroban RPC + tx builders
+│   ├── contract-spec/                # Interface JSON + deploy meta
+│   ├── public/
+│   │   ├── test-results.json         # Exported cargo test (make sync-tests)
+│   │   └── coverage-summary.json     # LLVM summary (make coverage)
+│   └── components/                   # Header, WalletConnect QA, etc.
 │
 ├── scripts/
 │   ├── deploy-testnet.sh
+│   ├── export-test-results.mjs
 │   └── setup-testnet-identity.sh
 │
-├── Makefile
+├── Makefile                          # Single entrypoint for CI, deploy, tests
 └── README.md
 ```
+
+---
+
+# Application routes (frontend)
+
+| Route | Purpose |
+|-------|---------|
+| `/` | Connect wallet, read all getters, submit writes, transaction log, demo presets |
+| `/tests` | Contract test + coverage dashboard (`make sync-tests`) |
+| `/tests/unit`, `/tests/integration`, `/tests/proptest`, `/tests/invariant`, `/tests/libfuzzer`, `/tests/coverage`, `/tests/mobilewallet` | Deep-link to a section |
+| `/bindings` | Soroban interface JSON / generated bindings explorer |
+| `/docs` | Operator-facing explanation of contract, wallets, env |
+| `/demo` | Plays `public/demo/recording.mp4` when you need a video-only demo |
+
+`npm run dev` runs **Next.js development mode** (`next dev`): hot reload, verbose errors, default [http://localhost:3000](http://localhost:3000). Production-like behavior: `npm run build` then `npm run start`.
 
 ---
 
@@ -444,19 +472,22 @@ The contract emits structured events specifically to support this future work.
 
 ---
 
-# Wallet & SDK Integrations
+# Wallet & SDK integrations
 
-Current focus:
+| Layer | Package / doc | Role |
+|-------|----------------|------|
+| RPC + transactions | `@stellar/stellar-sdk` | Simulate and submit Soroban invocations; read ledger state |
+| Connect + sign UI | `@creit-tech/stellar-wallets-kit` | Extension wallets and **WalletConnect** (mobile) |
+| WC project | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Reown Cloud — allowed origins must include your dev and Vercel URLs |
+| Evidence | [WalletConnect-Mobile-Success-Log.md](docs/WalletConnect-Mobile-Success-Log.md) | LOBSTR + Freighter verified on testnet with tx links |
 
-- `@stellar/stellar-sdk` (Soroban RPC and transactions)
-- `@stellar/freighter-api` for browser signing on testnet
+**Operator reminders**
 
-Future exploration:
+1. Mobile wallets must be on **testnet** and the `G…` address must be **funded on testnet** (Friendbot).
+2. Scan WalletConnect QR from **inside** Freighter or LOBSTR, not only the phone Camera app.
+3. “Connected” means the kit returned an address — always confirm a **write** and an explorer tx hash for demos.
 
-- **WalletConnect** (and other wallets) once a Stellar-capable signer is chosen for your stack
-- Blockdaemon wallet support
-- institutional custody integrations
-- wallet abstraction layers
+Future: custody, additional custodial signers, and wallet abstraction behind a tokenization service API.
 
 ---
 
@@ -491,29 +522,42 @@ Potential future areas:
 
 ---
 
-# Status
+# Recommended demo flow (5–10 minutes)
 
-Current phase:
-
-- foundational SDLC validation
-- tooling evaluation
-- frontend integration validation
-- deployment workflow validation
-- indexing/event pipeline validation
+1. **`make sync-tests`** (before the meeting) → open **`/tests`** — show **16 passed**, invariants, optional coverage %.
+2. **Home** — set or confirm contract id → **Connect** (extension or WalletConnect QR) → **Fill demo values** → one write → open Stellar Expert link from log.
+3. **`/bindings`** — show interface matches deployed wasm.
+4. **Optional:** **`/tests/mobilewallet`** or [WalletConnect log](docs/WalletConnect-Mobile-Success-Log.md) for mobile evidence without live WC.
 
 ---
 
-## POC Validation Checklist
+# Status
 
-- [ ] Soroban contract builds locally
-- [ ] Unit tests pass
+Current phase (this repo):
+
+| Area | State |
+|------|--------|
+| Contract + events | Implemented (`basic-storage`) |
+| Test depth (unit, property, invariant, integration, fuzz hook) | Implemented; dashboard export |
+| Static analysis + wasm build | Makefile / CI targets |
+| Testnet deploy | Scripted (`make deploy`) |
+| Frontend reads/writes | Implemented |
+| WalletConnect mobile (LOBSTR, Freighter) | Verified — see WC log |
+| Substreams / Firehose consumer | Documented architecture only |
+
+---
+
+## POC validation checklist
+
+- [ ] Soroban contract builds locally (`make build-contract`)
+- [ ] Unit tests pass (`make contract-test`)
 - [ ] Integration tests pass (`tests/integration_contract.rs`)
-- [ ] Property-style / proptest and fuzz harness paths exercised (`make contract-test`; optional `make contract-fuzz-smoke`)
-- [ ] Optional: coverage report reviewed (`make contract-coverage`)
-- [ ] Formatting enforced with cargo fmt
-- [ ] Linting enforced with cargo clippy
-- [ ] Contract deploys to Stellar testnet
-- [ ] Contract can be invoked from CLI
-- [ ] React frontend can read contract state
-- [ ] React frontend can submit write transaction
-- [ ] Contract emits event usable for Firehose/Substreams indexing
+- [ ] Property / proptest / invariant paths green (`make sync-tests` → `/tests`)
+- [ ] Optional: coverage reviewed (`make contract-coverage` → `/tests` coverage card)
+- [ ] `make fmt-check` and `make clippy` clean
+- [ ] Contract deploys to testnet (`make deploy`)
+- [ ] `NEXT_PUBLIC_CONTRACT_ID` set locally and on Vercel
+- [ ] Frontend reads contract state (home **Reads**)
+- [ ] Frontend submits write (extension or WalletConnect mobile)
+- [ ] Explorer shows invoke + event (e.g. `ValueSet`)
+- [ ] Optional: WalletConnect mobile re-check per [WC log](docs/WalletConnect-Mobile-Success-Log.md)

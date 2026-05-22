@@ -18,7 +18,11 @@ else
 FUZZ_SAN_FLAGS :=
 endif
 
-.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend contract-interface-json contract-bindings check ci ci-coverage clean clean-frontend stellar-identity deploy dev dev-frontend test-frontend sync-frontend-tests
+.PHONY: help install install-rust-target install-frontend fmt fmt-check format contract-test test contract-integration test-all-contract test-all sync-tests export-test-results contract-coverage coverage contract-fuzz-smoke fuzz lint clippy build build-contract build-frontend contract-interface-json contract-bindings check ci ci-coverage clean clean-frontend stellar-identity deploy dev dev-frontend test-frontend sync-frontend-tests macos-contract-source-help
+
+macos-contract-source-help: ## macOS: dialog + Finder reveal + open lib.rs (DemoForge / sandbox file access)
+	chmod +x "$(REPO_ROOT)/scripts/macos-open-contract-source.sh"
+	"$(REPO_ROOT)/scripts/macos-open-contract-source.sh"
 
 help: ## Show available targets and short descriptions
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'

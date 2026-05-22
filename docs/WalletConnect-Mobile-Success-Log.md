@@ -1,32 +1,92 @@
 # WalletConnect mobile — Freighter & LOBSTR success log
 
-This document records **verified WalletConnect flows** from the **Soroban Fullstack POC** (desktop browser / Vercel) to **mobile Stellar wallets**:
+This document records **verified WalletConnect flows** from the **Soroban Fullstack POC** (desktop browser or [Vercel](https://soroban-fullstack-poc.vercel.app)) to **mobile Stellar wallets**. It is the **evidence pack** for stakeholder demos, Stellar engagement reviews, and regression QA when wallet kit or Reown config changes.
 
-| Path | What we verified |
-|------|------------------|
-| **WalletConnect → LOBSTR** | QR / WC pairing; connection request + success for `soroban-fullstack-poc.vercel.app` |
-| **WalletConnect → Freighter** | QR scan, connect, `set()` confirm/sign, and Stellar Expert tx proof on testnet |
-
-Not MetaMask or other EVM wallets.
-
-**Live app:** [soroban-fullstack-poc.vercel.app](https://soroban-fullstack-poc.vercel.app)  
-**Network:** `stellar:testnet` via Stellar Wallets Kit + Reown WalletConnect.
+**Not in scope:** MetaMask, Ethereum WalletConnect, or custodial APIs without a Stellar signer.
 
 ---
 
-## LOBSTR — WalletConnect connect (mobile QR)
+## Executive summary
+
+| Path | What we verified | On-chain proof |
+|------|------------------|----------------|
+| **WalletConnect → LOBSTR** | QR pairing, connection approval, **Invoke Host Function** sign, tx confirmed | `set_signed` txs on testnet (table below) |
+| **WalletConnect → Freighter** | QR scan, connect, **`set()`** confirm/sign, success toast | `set(0)`, `set(42)` txs on testnet (table below) |
+
+**Live app:** [soroban-fullstack-poc.vercel.app](https://soroban-fullstack-poc.vercel.app)  
+**Network:** `stellar:testnet` only — via **Stellar Wallets Kit** and **Reown WalletConnect** when `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` is set.
+
+---
+
+## Architecture (how the POC wires wallets)
+
+```text
+Browser (Next.js home page)
+    → WalletProvider / Stellar Wallets Kit (@creit-tech/stellar-wallets-kit)
+        → Extension wallets (Freighter desktop, etc.)  OR
+        → WalletConnect (Reown) QR / deep link
+            → Mobile Freighter or LOBSTR (in-app WC scanner)
+    → @stellar/stellar-sdk (Soroban RPC simulate + submit)
+        → basic-storage contract on testnet (NEXT_PUBLIC_CONTRACT_ID)
+```
+
+**Code touchpoints**
+
+| Area | Path |
+|------|------|
+| Wallet kit + connect UI | `frontend/contexts/wallet-context.tsx` (and related layout) |
+| Soroban read/write | `frontend/lib/stellar.ts` |
+| Mobile QA section on `/tests` | `frontend/components/WalletConnectMobileVerification.tsx` |
+| In-app docs | `frontend/app/docs/page.tsx` → WalletConnect section |
+| Env template | `frontend/.env.example` |
+
+**Configuration**
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `NEXT_PUBLIC_CONTRACT_ID` | Yes (for writes) | Soroban contract `C…` on testnet |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | For WC | Reown Cloud project id; add **allowed origins** (`http://localhost:3000`, Vercel URL) |
+
+Without WalletConnect project id, **extension-only** connect may still work; **mobile QR** flows need the id.
+
+---
+
+## Preconditions (both wallets)
+
+1. **Testnet only** — mainnet accounts will not fund Soroban invokes on testnet.
+2. **Fund the mobile `G…` on testnet** — [Friendbot](https://friendbot.stellar.org/) once per address.
+3. **Scan inside the wallet app** — use **Settings → WalletConnect** (LOBSTR) or Freighter’s **WC scanner**, not the phone Camera app alone.
+4. **Desktop dApp open** — home page connected state should show the same network (`stellar:testnet`).
+
+---
+
+## LOBSTR — WalletConnect connect and writes
+
+### Session metadata
 
 | Field | Value |
 |--------|--------|
-| **Path** | **WalletConnect** (desktop POC) → **LOBSTR** (mobile) |
+| **Path** | WalletConnect (desktop POC) → LOBSTR (mobile) |
 | **Wallet app** | LOBSTR (mobile) |
 | **dApp** | Soroban Fullstack POC / `soroban-fullstack-poc.vercel.app` |
-| **Account shown in UI** | `GDYQK…N52LXW` (approve on connection request screen) |
-| **Result** | “Soroban Fullstack POC connection successful” — return to browser |
+| **Account (testnet)** | `GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW` |
+| **Connection UI** | “Soroban Fullstack POC connection successful” — return to browser |
 
-Use **Settings → Profile → Network → Testnet** in LOBSTR before WalletConnect or writes (this POC is **testnet** only). Then **Settings → WalletConnect** to scan the desktop QR (not the phone Camera app).
+### Operator steps (LOBSTR)
 
-**Writes failing with `Account not found`?** LOBSTR can show “connection successful” while your `G…` exists on **mainnet** but not testnet. Fix: **Network → Testnet**, then fund the same address on testnet: [Friendbot](https://friendbot.stellar.org/?addr=GDYQKAEPG3RUUQOEDRARAXSGP6BQASATLOZHQTDARQ2YX4J6QYN52LXW) (one-time per `G…` on testnet).
+1. **Settings → Profile → Network → Testnet** (screenshot 1 below).
+2. On desktop POC: **Connect** → choose WalletConnect → show QR.
+3. LOBSTR: **Settings → WalletConnect** → scan QR → approve connection.
+4. On desktop: use **Writes** (e.g. signed slot) → confirm **Invoke Host Function** on phone → wait for confirmed toast.
+
+### Troubleshooting (LOBSTR)
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| Connection OK but write fails `Account not found` | Account exists on **mainnet** only | Switch LOBSTR to **Testnet**, fund via Friendbot |
+| QR does nothing | Scanned with Camera, not LOBSTR WC | Use in-app WalletConnect scanner |
+| Wrong contract / read fails | Stale `NEXT_PUBLIC_CONTRACT_ID` on Vercel | Redeploy env; match `poc-contract-deploy.meta.json` |
+| No WC option on desktop | Missing `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Set Reown id + allowed origin |
 
 ### Screenshots (WalletConnect → LOBSTR)
 
@@ -36,11 +96,11 @@ Use **Settings → Profile → Network → Testnet** in LOBSTR before WalletConn
 
 Web: `/howtolobstrchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.JPG`
 
-#### 2. Connection request (`Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc`)
+#### 2. Connection request
 
 ![LOBSTR connection request — Soroban Fullstack POC](../frontend/public/Lobstrconnectionrequestwith walletconnectlobstrSorobanfullstackpoc.PNG)
 
-#### 3. Connection successful (`Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful`)
+#### 3. Connection successful
 
 ![LOBSTR Soroban Fullstack POC connection successful](../frontend/public/Lobstrwalletconnectionsorobanfullstack walletconnectsuccessful .PNG)
 
@@ -50,15 +110,15 @@ Toast: “Soroban Fullstack POC connection successful. You can now go back to yo
 
 ![LOBSTR sign Invoke Host Function](../frontend/public/LobstrwalletmobiletransactionscreenshotSoroban FullstackPOCwantsyoutosigntheInvokeHostFunction transaction.SorobanFullstackPOCwants you to sign the Invoke Host Function transaction..PNG)
 
-#### 5. Transaction confirmed (`lobstrtransactionsuccessfulconfirmedsorobanfullstackpocmobileqrcodescreenshotmobile`)
+#### 5. Transaction confirmed
 
 ![LOBSTR transaction confirmed](../frontend/public/lobstrtransactionsuccessfulconfirmedsorobanfullstackpocmobileqrcodescreenshotmobile.PNG)
 
-#### 6. Stellar Expert — `set_signed` on contract (`lobstrblockexploerer…contractinteraction`)
+#### 6. Stellar Expert — `set_signed` on contract
 
 ![LOBSTR wallet invokes set_signed on Stellar Expert](../frontend/public/lobstrblockexploererondesktopyoucanseethatthelobstrmobilewallettransactionyaddressucessfullyinvolkedsignsetfunctionontheblockexploreryoucanseethistranasctioncontractinteraction.png)
 
-Shows `GDYQKAEP…YN52LXW` → contract `CBGX…6O2R` with `set_signed(0 i32)` and `set_signed(-404 i32)` (filter by contract, click row for tx link).
+Shows `GDYQKAEP…YN52LXW` → contract `CBGX…6O2R` with `set_signed(0 i32)` and `set_signed(-404 i32)` (filter by contract; click row for tx link).
 
 ### Transaction log (verified writes — LOBSTR)
 
@@ -74,19 +134,35 @@ https://stellar.expert/explorer/testnet/account/GDYQKAEPG3RUUQOEDRARAXSGP6BQASAT
 
 ## Freighter — WalletConnect connect, sign, and explorer
 
+### Session metadata
+
 | Field | Value |
 |--------|--------|
-| **Public key** | `GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI` |
-| **Path** | **WalletConnect** (desktop dApp) → **Freighter** (mobile) |
-| **Wallet app** | Freighter (mobile) — paired via WalletConnect |
-| **Connection** | WalletConnect QR / URI from POC → Freighter in-app scanner |
+| **Public key (testnet)** | `GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI` |
+| **Path** | WalletConnect (desktop dApp) → Freighter (mobile) |
+| **Connection** | WC QR from POC → Freighter in-app scanner |
 | **dApp** | Soroban Fullstack POC / `soroban-fullstack-poc.vercel.app` |
-| **Contract (explorer filter)** | `CBGX…6O2R` — full **C…** id on [Stellar Expert contract page](https://stellar.expert/explorer/testnet/contract) when you click the contract chip in the UI |
+| **Contract (explorer)** | `CBGX…6O2R` — full `C…` from UI / env |
 
 **Account (testnet):**  
 https://stellar.expert/explorer/testnet/account/GBOE2WOJGWZATO2PXEBF7R74T5QOE7XFGNL55I4AIWEESWNC347YYNRI
 
-Use **Settings → Network → Test Net** in Freighter before WalletConnect or writes (this POC is **testnet** only).
+Use **Settings → Network → Test Net** before WalletConnect or writes.
+
+### Operator steps (Freighter)
+
+1. Freighter mobile: **Settings → Network → Test Net** (screenshot 1).
+2. Desktop: **Connect** → WalletConnect → QR.
+3. Freighter: scan QR → approve session.
+4. Desktop: **set** primary value (e.g. 42) → confirm on phone → verify explorer row + home log.
+
+### Troubleshooting (Freighter)
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| “Transaction successfully signed” but no ledger change | Wrong network on phone | Test Net + testnet-funded `G…` |
+| Simulation error on desktop | Bad args or missing contract id | Check env `C…`; try **Fill demo values** |
+| WC session drops | Background app killed | Re-scan QR |
 
 ---
 
@@ -94,28 +170,28 @@ Use **Settings → Network → Test Net** in Freighter before WalletConnect or w
 
 On the screen with **Filters → `CBGX…6O2R`** and the table **Transaction | Date**:
 
-1. **Click the transaction row** itself — the line that says  
+1. **Click the transaction row** — e.g.  
    `GBOE…YNRI invoked contract CBGX…6O2R set(42 u32)`  
-   (or the **date** on the right, e.g. `2026-05-20 15:00:38 UTC`).
-2. Stellar Expert opens the **transaction detail** page.
-3. **Copy the URL** from the browser address bar. It will look like:
+   (or the **date** column).
+2. Stellar Expert opens **transaction detail**.
+3. **Copy the URL** from the address bar:
 
    ```text
    https://stellar.expert/explorer/testnet/tx/<64-character-hex-hash>
    ```
 
-4. That URL is your **transaction link** for docs, PRs, or Teams.
+4. Use that URL in docs, PRs, or Teams.
 
-**Other ways to get the same link:**
+**Other ways to get the same link**
 
 | Where | Action |
 |--------|--------|
-| **Account page** | Open your `G…` account → **Transactions** → click the row → copy URL |
-| **Contract page** | Open the **C…** contract → activity list → click the invoke row → copy URL |
-| **Home app log** | After a write, copy hash from the POC **Transaction log** if shown, then open `https://stellar.expert/explorer/testnet/tx/<hash>` |
-| **Horizon (API)** | `https://horizon-testnet.stellar.org/transactions/<hash>` (same hash, different UI) |
+| **Account page** | Open `G…` → **Transactions** → click row → copy URL |
+| **Contract page** | Open `C…` → activity → click invoke row → copy URL |
+| **Home app log** | After write, copy hash from **Transaction log** → open Expert `/tx/<hash>` |
+| **Horizon (API)** | `https://horizon-testnet.stellar.org/transactions/<hash>` |
 
-The **filter chip** (`CBGX…6O2R`) only narrows the list; it is **not** the transaction link. You need one click into a **specific transaction**.
+The **filter chip** (`CBGX…6O2R`) only narrows the list; it is **not** the transaction link.
 
 ---
 
@@ -128,21 +204,19 @@ The **filter chip** (`CBGX…6O2R`) only narrows the list; it is **not** the tra
 
 ### On-chain detail (`set(42 u32)` — tx #2)
 
-From Stellar Expert transaction view (matches your paste):
-
 ```text
 Invoked contract CBGX…6O2R set(42 u32)
 Contract CBGX…6O2R raised event ["value_set" sym] with data 42 u32
 Contract CBGX…6O2R updated persistent data ["Value" sym] = 42 u32
 ```
 
-Fee summary (from explorer): refundable 411, non-refundable 6,715 stroops; 1 emitted event (84B).
+Fee summary (explorer): refundable 411, non-refundable 6,715 stroops; 1 emitted event (84B).
 
 ---
 
 ## Screenshots (WalletConnect → Freighter)
 
-Every image in this section is **WalletConnect on the POC** connecting to or signing in **Freighter mobile**.
+Every image below is **WalletConnect on the POC** connecting to or signing in **Freighter mobile**.
 
 ### 1. Enable Test Net (Settings → Network)
 
@@ -150,7 +224,7 @@ Every image in this section is **WalletConnect on the POC** connecting to or sig
 
 Web: `/howtofreighterwalletchangenetworktostellartestnetgotosettingsprofilenetworkstellartestnet.jpg`
 
-### WalletConnect pairing (Freighter)
+### WalletConnect pairing
 
 #### 2. Scan QR (Freighter mobile)
 
@@ -164,7 +238,7 @@ Web: `/freighterscanQRcode.jpg`
 
 Web: `/successfulSorobanfullstackpocconnectiononphone.jpg`
 
-### Mobile sign flow in Freighter (`set()` via WalletConnect)
+### Mobile sign flow (`set()` via WalletConnect)
 
 #### 4. Confirm transaction (Test Net, fee ~0.006 XLM)
 
@@ -178,7 +252,7 @@ Web: `/mobilescreenshotyoucanseetransactionset()withmobilewallet.PNG`
 
 Web: `/transactionsuccessfullysignmobiledwallet.PNG`
 
-### Desktop block explorer (contract interactions)
+### Desktop block explorer
 
 ![Stellar Expert — GBOE…YNRI invoked set() on contract CBGX…6O2R](../frontend/public/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressucessfullyinvolkedset()ontheblockexploreryoucanseethistranasctioncontractinteraction.png)
 
@@ -186,7 +260,25 @@ Web: `/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressuce
 
 ---
 
-## Checklist
+## Regression checklist (re-run before claiming “still works”)
+
+| Step | LOBSTR | Freighter |
+|------|--------|-----------|
+| Wallet network → testnet | ☐ | ☐ |
+| Testnet account funded (Friendbot) | ☐ | ☐ |
+| Vercel/local env: contract id + WC project id | ☐ | ☐ |
+| WC pairing from **in-app** scanner | ☐ | ☐ |
+| dApp shows connected | ☐ | ☐ |
+| Mobile sign Invoke Host Function | ☐ | ☐ |
+| Mobile tx confirmed toast | ☐ | ☐ |
+| Stellar Expert tx link captured | ☐ | ☐ |
+| Event + storage visible on tx detail | ☐ | ☐ |
+
+Copy ✅ from the table in the previous section when you are **not** re-running QA.
+
+---
+
+## Verified checklist (2026-05-20 snapshot)
 
 | Step | LOBSTR | Freighter |
 |------|--------|-----------|
@@ -200,26 +292,36 @@ Web: `/blockexploererondesktopyoucanseethatthemobilewallettransactionyaddressuce
 | Mobile confirm `set()` on testnet | — | ✅ |
 | Mobile “Transaction successfully signed!” | — | ✅ |
 | Explorer shows writes on contract | — | ✅ (`set(0)`, `set(42)`) |
-| Transaction links in table above | — | ✅ |
+| Transaction links in table above | ✅ | ✅ |
+
+---
+
+## Meeting talking points (30 seconds)
+
+> We proved **mobile WalletConnect** from our Soroban POC to **LOBSTR and Freighter** on **testnet**: connect, sign **Invoke Host Function**, and **on-chain verification** on Stellar Expert with real transaction hashes. Desktop uses **Stellar Wallets Kit** and **Reown**; the contract emits **`ValueSet` / `SignedSet`** events for indexer work. This is the wallet path tokenization demos can build on — not EVM WC.
 
 ---
 
 ## App transaction log (optional paste)
 
-```text
-<!-- Paste lines from the POC home Transaction log after future writes -->
+Paste fresh lines from the POC home **Transaction log** after new writes:
 
+```text
+<!-- Example:
+2026-05-21 … set(99 u32) hash=…
+-->
 ```
 
 ---
 
 ## Related docs
 
-- In-app: [`/tests/mobilewallet`](https://soroban-fullstack-poc.vercel.app/tests/mobilewallet) → **WalletConnect mobile (verified)** (screenshots + tx links)  
-- `docs/Meeting-Talking-Points-May-19-2026.md`  
-- `docs/RecentWork-SorobanPOC-May2026.md`  
-- `README.md`
+- In-app: [`/tests/mobilewallet`](https://soroban-fullstack-poc.vercel.app/tests/mobilewallet) — embedded screenshots + links  
+- [POC workstream map](./POC_WORKSTREAM_TRACKING.md) — FE / wallet row marked **Done**  
+- [Contract tests dashboard](../frontend/docs/ContractTestsDashboard.md) — Rust test evidence  
+- `docs/RecentWork-SorobanPOC-May2026.md` (if present on your branch)  
+- [README.md](../README.md) — deploy, env, Makefile
 
 ---
 
-*Last updated: 2026-05-20 — LOBSTR WalletConnect connect + Freighter connect/sign/explorer verified on testnet.*
+*Last updated: 2026-05-20 — LOBSTR WalletConnect connect + signed writes; Freighter WalletConnect connect + `set()` writes; explorer-verified on testnet. Re-run regression checklist when upgrading stellar-wallets-kit or Reown project settings.*
