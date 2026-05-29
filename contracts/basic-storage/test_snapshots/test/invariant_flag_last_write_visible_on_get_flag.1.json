@@ -70,7 +70,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "bool": true
+                  "bool": false
                 }
               }
             },

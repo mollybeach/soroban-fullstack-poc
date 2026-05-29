@@ -1508,9 +1508,22 @@ export default function HomePage() {
   const deployedAtLabel = (() => {
     if (!deployMetaMatches || !deployMeta.deployedAt) return null;
     const d = new Date(deployMeta.deployedAt);
-    return Number.isNaN(d.getTime())
-      ? null
-      : d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    if (Number.isNaN(d.getTime())) return null;
+    // Deterministic across server (Node) and client (browser): pin the locale,
+    // the timezone, and use explicit fields. `toLocaleString` with
+    // dateStyle/timeStyle + an `undefined` locale renders differently depending
+    // on the runtime's ICU/CLDR version (e.g. "May 14, 2026, 12:31 PM" on the
+    // server vs "May 14, 2026 at 12:31 PM" in the browser), which causes a React
+    // hydration mismatch.
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "America/New_York",
+    }).format(d);
   })();
 
   const readDisplay = (v: string | number | null) =>
@@ -1747,7 +1760,7 @@ export default function HomePage() {
               <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
                 <Clock className="h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
                 <span className="font-semibold text-violet-900">Deployed</span>
-                <time className="tabular-nums text-slate-700" dateTime={deployMeta.deployedAt}>
+                <time className="tabular-nums text-slate-700" dateTime={deployMeta.deployedAt} suppressHydrationWarning>
                   {deployedAtLabel} EST
                 </time>
               </p>

@@ -93,7 +93,6 @@ pub struct ValueSet {
 pub struct SignedSet {
     pub v: i32,
 }
-make contract-test
 
 #[contractevent(data_format = "single-value")]
 #[derive(Clone)]
