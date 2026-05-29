@@ -14,11 +14,14 @@ This repository is intended to validate the foundational development lifecycle f
 - Foundation for observability and security tooling
 
 The project intentionally avoids business-specific logic and focuses purely on validating the technical stack and SDLC workflow. It is suitable as a **reference implementation** for teams building tokenization or factory-style platforms on Stellar: contract patterns, test depth, deploy scripts, wallet integration, and indexer-friendly events are all exercised in one place.
+make test
 
 ### Documentation map
 
 | Document | Audience | Contents |
 |----------|----------|----------|
+cd frontend && npm run dev
+make contract-test
 | [POC workstream ↔ repo](docs/POC_WORKSTREAM_TRACKING.md) | PM / tech lead | What is **Done / Partial / Planned** per workstream, verify commands, demo order |
 | [WalletConnect mobile success log](docs/WalletConnect-Mobile-Success-Log.md) | QA / Stellar review | Verified LOBSTR + Freighter WC flows, tx hashes, screenshots, troubleshooting |
 | [Contract tests dashboard](frontend/docs/ContractTestsDashboard.md) | Engineering | `/tests` JSON pipeline, 16-test evidence, coverage |

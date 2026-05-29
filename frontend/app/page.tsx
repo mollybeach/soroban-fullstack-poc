@@ -916,13 +916,24 @@ export default function HomePage() {
     }
   }
 
-  const appendBadSeqHintIfNeeded = useCallback(
+  const appendWriteErrorHintsIfNeeded = useCallback(
     (err: unknown) => {
       const msg = formatUnknownError(err);
       if (/txBadSeq|"name":\s*"txBadSeq"/i.test(msg) || /bad\s*seq/i.test(msg)) {
         appendLog(
           "info",
           "txBadSeq: your account’s sequence moved (often from double-clicking submit or another tab/app sending a tx). Wait until the previous transaction confirms, then submit once—do not start a second submit while the wallet approval is still open.",
+        );
+        return;
+      }
+      if (
+        /walletconnect session expired/i.test(msg) ||
+        /recently deleted/i.test(msg) ||
+        /no walletconnect session/i.test(msg)
+      ) {
+        appendLog(
+          "info",
+          "WalletConnect session ended: use Connect wallet and scan the desktop QR again in Freighter or LOBSTR (in-app WalletConnect — not iPhone Camera).",
         );
       }
     },
@@ -975,7 +986,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set(${value}) failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1008,7 +1019,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_signed failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1035,7 +1046,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_tag failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1069,7 +1080,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_counter failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1104,7 +1115,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_flag failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1138,7 +1149,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_i64 failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1169,7 +1180,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_blob failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1203,7 +1214,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_u128 failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1230,7 +1241,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_symbol failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1258,7 +1269,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_pointer failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1292,7 +1303,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_i128 failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1326,7 +1337,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_vec_u32 failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1360,7 +1371,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_scores failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1387,7 +1398,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_plain_addr failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1426,7 +1437,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_nested failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);
@@ -1467,7 +1478,7 @@ export default function HomePage() {
       const msg = formatUnknownError(err);
       setStatus(msg);
       appendLog("error", `set_widget failed: ${msg}`);
-      appendBadSeqHintIfNeeded(err);
+      appendWriteErrorHintsIfNeeded(err);
     } finally {
       writeInFlightRef.current = false;
       setWritePending(false);

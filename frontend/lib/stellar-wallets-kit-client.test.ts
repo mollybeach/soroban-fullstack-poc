@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getWalletConnectProjectId,
+  isStaleWalletConnectSessionError,
   isSwkAuthModalDismissed,
 } from "./wallet-kit-utils";
 
@@ -48,5 +49,29 @@ describe("isSwkAuthModalDismissed", () => {
 
   it("returns false for real errors with different copy", () => {
     expect(isSwkAuthModalDismissed({ code: -1, message: "Network error" })).toBe(false);
+  });
+});
+
+describe("isStaleWalletConnectSessionError", () => {
+  it("detects relay session deleted errors", () => {
+    expect(
+      isStaleWalletConnectSessionError(
+        new Error(
+          "Missing or invalid. Record was recently deleted - session: 9bda256accf6ba9e9cb7a4f809f347bcf5c73bccc28fe673c82562f68ba72d9d",
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("detects kit no-session copy", () => {
+    expect(
+      isStaleWalletConnectSessionError(
+        new Error("No WalletConnect session found or it expired for the selected address."),
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false for unrelated wallet errors", () => {
+    expect(isStaleWalletConnectSessionError(new Error("txBadSeq"))).toBe(false);
   });
 });

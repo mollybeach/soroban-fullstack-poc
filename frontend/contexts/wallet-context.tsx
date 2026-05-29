@@ -18,6 +18,7 @@ import {
   KitEventType,
   openStellarWalletsKitAuth,
   StellarWalletsKit,
+  validateWalletConnectSessionIfNeeded,
 } from "@/lib/stellar-wallets-kit-client";
 import type { SorobanTransactionSigner } from "@/lib/wallet-types";
 
@@ -75,16 +76,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     void ensureStellarWalletsKit().then(async () => {
       if (cancelled) return;
       try {
+        await validateWalletConnectSessionIfNeeded();
+        if (cancelled) return;
         const { address } = await StellarWalletsKit.getAddress();
         if (address && !cancelled) {
           setPublicKey(address);
           setWalletMode("stellar-wallets-kit");
         }
       } catch {
-        // not connected yet
+        // not connected yet (or stale WalletConnect session was cleared)
       }
       if (cancelled) return;
-      unState = StellarWalletsKit.on(KitEventType.STATE_UPDATED, (ev) => {
+      unState = StellarWalletsKit.on(KitEventType.STATE_UPDATED, (ev: { payload: { address: any; }; }) => {
         const a = ev.payload.address;
         setPublicKey(a ?? null);
         setWalletMode(a ? "stellar-wallets-kit" : null);

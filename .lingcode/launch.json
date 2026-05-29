@@ -1,0 +1,22 @@
+{
+  "activeID" : "D8FEBC67-E34B-43E5-A7CF-108F86A883DD",
+  "configurations" : [
+    {
+      "buildConfiguration" : "Debug",
+      "destination" : {
+        "myMac" : {
+
+        }
+      },
+      "environmentVariables" : {
+
+      },
+      "id" : "D8FEBC67-E34B-43E5-A7CF-108F86A883DD",
+      "launchArguments" : [
+
+      ],
+      "name" : "Debug on My Mac",
+      "schemeName" : ""
+    }
+  ]
+}

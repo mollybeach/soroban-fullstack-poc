@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-05-08T18:18:51.602Z",
+  "generatedAt": "2026-05-26T14:50:03.906Z",
   "tool": "cargo-llvm-cov",
   "totals": {
     "lines": {
-      "covered": 101,
-      "count": 103,
-      "percent": 98.06
+      "covered": 370,
+      "count": 430,
+      "percent": 86.05
     },
     "functions": {
-      "covered": 16,
-      "count": 18,
-      "percent": 88.89
+      "covered": 57,
+      "count": 75,
+      "percent": 76
     },
     "branches": {
       "covered": 0,
@@ -21,8 +21,8 @@
   "files": [
     {
       "file": "src/lib.rs",
-      "linesPercent": 95.24,
-      "functionsPercent": 80
+      "linesPercent": 75.51,
+      "functionsPercent": 67.27
     },
     {
       "file": "src/test.rs",
